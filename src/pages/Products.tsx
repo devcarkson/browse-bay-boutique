@@ -29,7 +29,7 @@ const Products = () => {
         product.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
         product.description.toLowerCase().includes(filters.searchTerm.toLowerCase());
       
-      const matchesCategory = !filters.category || product.category === filters.category;
+      const matchesCategory = !filters.category || filters.category === 'all' || product.category === filters.category;
       
       const matchesPrice = product.price >= (filters.minPrice || 0) && 
         product.price <= (filters.maxPrice || 1000);
@@ -102,12 +102,12 @@ const Products = () => {
               {/* Category */}
               <div>
                 <Label>Category</Label>
-                <Select value={filters.category || ''} onValueChange={(value) => handleFilterChange('category', value)}>
+                <Select value={filters.category || 'all'} onValueChange={(value) => handleFilterChange('category', value === 'all' ? '' : value)}>
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="All Categories" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Categories</SelectItem>
+                    <SelectItem value="all">All Categories</SelectItem>
                     {categories.map(category => (
                       <SelectItem key={category.id} value={category.slug}>
                         {category.name}
