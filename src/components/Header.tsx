@@ -1,14 +1,16 @@
 
-import React from 'react';
-import { ShoppingCart, Search, User, Menu } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShoppingCart, Search, User, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/contexts/CartContext';
 import { Link } from 'react-router-dom';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const Header = () => {
   const { getItemCount } = useCart();
   const itemCount = getItemCount();
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <header className="border-b bg-background sticky top-0 z-50">
@@ -49,7 +51,7 @@ const Header = () => {
 
           {/* User Actions */}
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" asChild>
+            <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
               <Link to="/login">
                 <User className="h-4 w-4" />
                 <span className="hidden sm:inline ml-2">Login</span>
@@ -68,9 +70,60 @@ const Header = () => {
               </Link>
             </Button>
 
-            <Button variant="ghost" size="sm" className="md:hidden">
-              <Menu className="h-4 w-4" />
-            </Button>
+            {/* Mobile Menu */}
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="sm" className="md:hidden">
+                  <Menu className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                <div className="flex flex-col space-y-4 mt-6">
+                  {/* Mobile Search */}
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      placeholder="Search products..."
+                      className="pl-10"
+                    />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  </div>
+
+                  {/* Mobile Navigation */}
+                  <nav className="flex flex-col space-y-4">
+                    <Link
+                      to="/products"
+                      className="text-foreground hover:text-primary transition-colors py-2"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      Products
+                    </Link>
+                    <Link
+                      to="/about"
+                      className="text-foreground hover:text-primary transition-colors py-2"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      About
+                    </Link>
+                    <Link
+                      to="/contact"
+                      className="text-foreground hover:text-primary transition-colors py-2"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      Contact
+                    </Link>
+                    <Link
+                      to="/login"
+                      className="text-foreground hover:text-primary transition-colors py-2 flex items-center"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      Login
+                    </Link>
+                  </nav>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>
