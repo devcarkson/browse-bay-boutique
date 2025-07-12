@@ -28,9 +28,9 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="min-h-screen bg-background flex flex-col">
+          <div className="min-h-screen bg-background flex flex-col overflow-x-hidden w-full">
             <Header />
-            <main className="flex-1">
+            <main className="flex-1 w-full overflow-x-hidden">
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/products" element={<Products />} />

@@ -12,9 +12,9 @@ const Home = () => {
   const newArrivals = products.slice(0, 8);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen w-full overflow-x-hidden">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary/10 to-secondary/10 py-20">
+      <section className="bg-gradient-to-r from-primary/10 to-secondary/10 py-20 w-full">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6">
             Welcome to <span className="text-primary">SGB</span>
@@ -37,7 +37,7 @@ const Home = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 bg-background">
+      <section className="py-16 bg-background w-full">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
@@ -66,7 +66,7 @@ const Home = () => {
       </section>
 
       {/* Categories Section */}
-      <section className="py-16 bg-muted/30">
+      <section className="py-16 bg-muted/30 w-full">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Shop by Category</h2>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
@@ -91,14 +91,14 @@ const Home = () => {
       </section>
 
       {/* Featured Products Slider */}
-      <section className="py-16">
+      <section className="py-16 w-full">
         <div className="container mx-auto px-4">
           <FeaturedSlider products={featuredProducts} title="Featured Products" />
         </div>
       </section>
 
       {/* New Arrivals Slider */}
-      <section className="py-16 bg-muted/30">
+      <section className="py-16 bg-muted/30 w-full">
         <div className="container mx-auto px-4">
           <FeaturedSlider products={newArrivals} title="New Arrivals" />
         </div>
