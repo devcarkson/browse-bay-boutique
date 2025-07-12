@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, Grid, List } from 'lucide-react';
+import { Search, Filter, Grid, List, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,9 +11,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ProductCard from '@/components/ProductCard';
 import { products, categories } from '@/data/mockData';
 import { FilterOptions } from '@/types';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Products = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showFilters, setShowFilters] = useState(false);
+  const isMobile = useIsMobile();
   const [filters, setFilters] = useState<FilterOptions>({
     searchTerm: '',
     category: '',
@@ -72,156 +75,250 @@ const Products = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Filters Sidebar */}
-        <aside className="lg:w-64 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+    <div className="w-full overflow-x-hidden">
+      <div className="container mx-auto px-4 py-4 lg:py-8">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
+          {/* Mobile Filter Toggle */}
+          {isMobile && (
+            <div className="flex justify-between items-center mb-4">
+              <h1 className="text-2xl font-bold">Products</h1>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2"
+              >
                 <Filter className="h-4 w-4" />
                 Filters
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Search */}
-              <div>
-                <Label htmlFor="search">Search</Label>
-                <div className="relative mt-1">
-                  <Input
-                    id="search"
-                    placeholder="Search products..."
-                    value={filters.searchTerm || ''}
-                    onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
-                    className="pl-10"
-                  />
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                </div>
-              </div>
-
-              {/* Category */}
-              <div>
-                <Label>Category</Label>
-                <Select value={filters.category || 'all'} onValueChange={(value) => handleFilterChange('category', value === 'all' ? '' : value)}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="All Categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map(category => (
-                      <SelectItem key={category.id} value={category.slug}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Price Range */}
-              <div>
-                <Label>Price Range: ${filters.minPrice} - ${filters.maxPrice}</Label>
-                <div className="mt-2 space-y-3">
-                  <Slider
-                    value={[filters.minPrice || 0]}
-                    onValueChange={([value]) => handleFilterChange('minPrice', value)}
-                    max={500}
-                    step={10}
-                    className="w-full"
-                  />
-                  <Slider
-                    value={[filters.maxPrice || 500]}
-                    onValueChange={([value]) => handleFilterChange('maxPrice', value)}
-                    max={500}
-                    step={10}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              {/* In Stock */}
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="inStock"
-                  checked={filters.inStock || false}
-                  onCheckedChange={(checked) => handleFilterChange('inStock', checked)}
-                />
-                <Label htmlFor="inStock">In Stock Only</Label>
-              </div>
-
-              <Button onClick={clearFilters} variant="outline" className="w-full">
-                Clear Filters
               </Button>
-            </CardContent>
-          </Card>
-        </aside>
-
-        {/* Products Grid */}
-        <main className="flex-1">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <div>
-              <h1 className="text-3xl font-bold">Products</h1>
-              <p className="text-muted-foreground">
-                Showing {filteredProducts.length} of {products.length} products
-              </p>
-            </div>
-
-            <div className="flex items-center gap-4">
-              {/* Sort */}
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="price-low">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high">Price: High to Low</SelectItem>
-                  <SelectItem value="rating">Rating</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* View Mode */}
-              <div className="flex border rounded-md">
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className="rounded-r-none"
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('list')}
-                  className="rounded-l-none"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Products */}
-          {filteredProducts.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-lg text-muted-foreground">No products found matching your criteria.</p>
-              <Button onClick={clearFilters} className="mt-4">
-                Clear Filters
-              </Button>
-            </div>
-          ) : (
-            <div className={`grid gap-6 ${
-              viewMode === 'grid' 
-                ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-                : 'grid-cols-1'
-            }`}>
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
             </div>
           )}
-        </main>
+
+          {/* Filters Sidebar */}
+          <aside className={`
+            ${isMobile ? 'fixed inset-0 z-50 bg-background p-4' : 'lg:w-64'} 
+            ${isMobile && !showFilters ? 'hidden' : 'block'}
+            ${!isMobile ? 'space-y-6' : ''}
+          `}>
+            {isMobile && (
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold">Filters</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowFilters(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
+            <Card className={isMobile ? 'h-full overflow-y-auto' : ''}>
+              <CardHeader className={isMobile ? 'pb-4' : ''}>
+                <CardTitle className="flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  Filters
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Search */}
+                <div>
+                  <Label htmlFor="search">Search</Label>
+                  <div className="relative mt-1">
+                    <Input
+                      id="search"
+                      placeholder="Search products..."
+                      value={filters.searchTerm || ''}
+                      onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
+                      className="pl-10"
+                    />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  </div>
+                </div>
+
+                {/* Category */}
+                <div>
+                  <Label>Category</Label>
+                  <Select value={filters.category || 'all'} onValueChange={(value) => handleFilterChange('category', value === 'all' ? '' : value)}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {categories.map(category => (
+                        <SelectItem key={category.id} value={category.slug}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Price Range */}
+                <div>
+                  <Label>Price Range: ₦{filters.minPrice} - ₦{filters.maxPrice}</Label>
+                  <div className="mt-2 space-y-3">
+                    <div>
+                      <Label className="text-sm text-muted-foreground">Min Price</Label>
+                      <Slider
+                        value={[filters.minPrice || 0]}
+                        onValueChange={([value]) => handleFilterChange('minPrice', value)}
+                        max={500}
+                        step={10}
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm text-muted-foreground">Max Price</Label>
+                      <Slider
+                        value={[filters.maxPrice || 500]}
+                        onValueChange={([value]) => handleFilterChange('maxPrice', value)}
+                        max={500}
+                        step={10}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* In Stock */}
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="inStock"
+                    checked={filters.inStock || false}
+                    onCheckedChange={(checked) => handleFilterChange('inStock', checked)}
+                  />
+                  <Label htmlFor="inStock">In Stock Only</Label>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Button onClick={clearFilters} variant="outline" className="w-full">
+                    Clear Filters
+                  </Button>
+                  {isMobile && (
+                    <Button onClick={() => setShowFilters(false)} className="w-full">
+                      Apply Filters
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </aside>
+
+          {/* Products Grid */}
+          <main className="flex-1 w-full overflow-hidden">
+            {/* Header - Hidden on mobile when filters are shown */}
+            {!isMobile && (
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <div>
+                  <h1 className="text-3xl font-bold">Products</h1>
+                  <p className="text-muted-foreground">
+                    Showing {filteredProducts.length} of {products.length} products
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  {/* Sort */}
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="name">Name</SelectItem>
+                      <SelectItem value="price-low">Price: Low to High</SelectItem>
+                      <SelectItem value="price-high">Price: High to Low</SelectItem>
+                      <SelectItem value="rating">Rating</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* View Mode */}
+                  <div className="flex border rounded-md">
+                    <Button
+                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('grid')}
+                      className="rounded-r-none"
+                    >
+                      <Grid className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'list' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('list')}
+                      className="rounded-l-none"
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Mobile Header */}
+            {isMobile && !showFilters && (
+              <div className="mb-4">
+                <p className="text-sm text-muted-foreground mb-3">
+                  Showing {filteredProducts.length} of {products.length} products
+                </p>
+                
+                <div className="flex items-center justify-between gap-2">
+                  {/* Sort */}
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="name">Name</SelectItem>
+                      <SelectItem value="price-low">Price: Low to High</SelectItem>
+                      <SelectItem value="price-high">Price: High to Low</SelectItem>
+                      <SelectItem value="rating">Rating</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* View Mode */}
+                  <div className="flex border rounded-md">
+                    <Button
+                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('grid')}
+                      className="rounded-r-none"
+                    >
+                      <Grid className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'list' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('list')}
+                      className="rounded-l-none"
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Products */}
+            {filteredProducts.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-lg text-muted-foreground">No products found matching your criteria.</p>
+                <Button onClick={clearFilters} className="mt-4">
+                  Clear Filters
+                </Button>
+              </div>
+            ) : (
+              <div className={`grid gap-4 lg:gap-6 ${
+                viewMode === 'grid' 
+                  ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
+                  : 'grid-cols-1'
+              }`}>
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
+          </main>
+        </div>
       </div>
     </div>
   );
