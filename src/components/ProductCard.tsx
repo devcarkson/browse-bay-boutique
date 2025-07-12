@@ -20,8 +20,22 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     e.stopPropagation();
     addToCart(product);
     toast({
-      title: "Added to cart",
-      description: `${product.name} has been added to your cart.`,
+      title: "✨ Added to cart!",
+      description: (
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted">
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div>
+            <p className="font-medium">{product.name}</p>
+            <p className="text-sm text-muted-foreground">₦{product.price.toLocaleString()}</p>
+          </div>
+        </div>
+      ),
     });
   };
 
@@ -68,7 +82,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           
           <div className="flex items-center justify-between">
             <span className="text-2xl font-bold text-primary">
-              ${product.price.toFixed(2)}
+              ₦{product.price.toLocaleString()}
             </span>
             <span className="text-sm text-muted-foreground">
               {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
