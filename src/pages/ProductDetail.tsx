@@ -111,8 +111,8 @@ const ProductDetail = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen w-full overflow-x-hidden">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 mb-6">
           <Button variant="ghost" size="sm" asChild>
@@ -123,10 +123,10 @@ const ProductDetail = () => {
           </Button>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Product Image */}
-          <div className="space-y-4">
-            <div className="aspect-square overflow-hidden rounded-lg bg-gray-100">
+          <div className="w-full">
+            <div className="aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
               <img
                 src={product.image}
                 alt={product.name}
@@ -136,9 +136,9 @@ const ProductDetail = () => {
           </div>
 
           {/* Product Info */}
-          <div className="space-y-6">
+          <div className="w-full space-y-6">
             <div>
-              <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
+              <h1 className="text-2xl lg:text-3xl font-bold mb-2 break-words">{product.name}</h1>
               
               {product.rating && (
                 <div className="flex items-center gap-2 mb-4">
@@ -149,8 +149,8 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              <div className="flex items-center gap-4 mb-4">
-                <span className="text-3xl font-bold text-primary">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
+                <span className="text-2xl lg:text-3xl font-bold text-primary">
                   ₦{product.price.toLocaleString()}
                 </span>
                 <Badge variant={product.stock > 0 ? "default" : "destructive"}>
@@ -197,7 +197,7 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   onClick={handleAddToCart}
                   disabled={product.stock === 0}
@@ -207,12 +207,14 @@ const ProductDetail = () => {
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   Add to Cart
                 </Button>
-                <Button variant="outline" size="lg" onClick={handleAddToWishlist}>
-                  <Heart className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="lg" onClick={handleShare}>
-                  <Share2 className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-3">
+                  <Button variant="outline" size="lg" onClick={handleAddToWishlist}>
+                    <Heart className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="lg" onClick={handleShare}>
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -243,7 +245,7 @@ const ProductDetail = () => {
 
         {/* Reviews Section */}
         <div className="mt-16 space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h2 className="text-2xl font-bold">Customer Reviews</h2>
             <Button 
               onClick={() => setShowReviewForm(!showReviewForm)}
