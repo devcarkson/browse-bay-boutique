@@ -93,7 +93,7 @@ const Footer = () => {
         <div className="border-t mt-8 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-muted-foreground text-sm">
-              © 2024 SGB. All rights reserved. Made with 💕
+              © 2025 SGB. All rights reserved. Made with 💕
             </p>
             <div className="flex gap-6 text-sm">
               <a href="#" className="text-muted-foreground hover:text-primary transition-colors">

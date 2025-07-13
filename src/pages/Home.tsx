@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import FeaturedSlider from '@/components/FeaturedSlider';
+import SimpleProductCard from '@/components/SimpleProductCard';
 import { products, categories } from '@/data/mockData';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Truck, Shield, HeadphonesIcon } from 'lucide-react';
@@ -8,6 +10,7 @@ import { ArrowRight, Truck, Shield, HeadphonesIcon } from 'lucide-react';
 const Home = () => {
   const featuredProducts = products.filter(product => product.featured);
   const newArrivals = products.slice(0, 8);
+  const displayProducts = products.slice(0, 6);
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden">
@@ -34,9 +37,6 @@ const Home = () => {
         </div>
       </section>
 
-      
-
-      
       {/* Featured Products Slider */}
       <section className="py-2 w-full">
         <div className="container mx-auto px-4">
@@ -48,6 +48,31 @@ const Home = () => {
       <section className="py-2 bg-muted/30 w-full">
         <div className="container mx-auto px-4">
           <FeaturedSlider products={newArrivals} title="New Arrivals" />
+        </div>
+      </section>
+
+      {/* Products Grid Section */}
+      <section className="py-16 w-full">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Shop Our Products</h2>
+            <p className="text-muted-foreground mb-8">
+              Browse through our carefully selected collection of quality products
+            </p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:gap-6">
+            {displayProducts.map((product) => (
+              <SimpleProductCard key={product.id} product={product} />
+            ))}
+          </div>
+          <div className="text-center mt-8">
+            <Button asChild size="lg">
+              <Link to="/products">
+                View All Products
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 
