@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import FeaturedSlider from '@/components/FeaturedSlider';
+import ProductCard from '@/components/ProductCard';
 import Footer from '@/components/Footer';
 import { products, categories } from '@/data/mockData';
 import { Link } from 'react-router-dom';
@@ -10,6 +11,7 @@ import { ArrowRight, Truck, Shield, HeadphonesIcon } from 'lucide-react';
 const Home = () => {
   const featuredProducts = products.filter(product => product.featured);
   const newArrivals = products.slice(0, 8);
+  const popularProducts = products.slice(8, 16); // Get 8 different products for the list
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden">
@@ -101,6 +103,33 @@ const Home = () => {
       <section className="py-16 bg-muted/30 w-full">
         <div className="container mx-auto px-4">
           <FeaturedSlider products={newArrivals} title="New Arrivals" />
+        </div>
+      </section>
+
+      {/* Popular Products Grid */}
+      <section className="py-16 w-full">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">Popular Products</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Discover our most loved products chosen by customers like you
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {popularProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Button asChild size="lg">
+              <Link to="/products">
+                View All Products
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 

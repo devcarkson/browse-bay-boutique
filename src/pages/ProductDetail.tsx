@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ShoppingCart, Heart, Share2, Star, MessageCircle, Copy } from 'lucide-react';
@@ -13,6 +12,7 @@ import Footer from '@/components/Footer';
 import { products } from '@/data/mockData';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from '@/hooks/use-toast';
+import ProductImageSlider from '@/components/ProductImageSlider';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -26,6 +26,13 @@ const ProductDetail = () => {
   const similarProducts = products.filter(p => 
     p.category === product?.category && p.id !== product?.id
   ).slice(0, 8);
+
+  // Mock multiple images for demonstration - in real app this would come from product data
+  const productImages = product ? [
+    product.image,
+    product.image, // You can replace these with actual different images
+    product.image
+  ] : [];
 
   if (!product) {
     return (
@@ -124,15 +131,9 @@ const ProductDetail = () => {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Product Image */}
+          {/* Product Image Slider */}
           <div className="w-full">
-            <div className="aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
-            </div>
+            <ProductImageSlider images={productImages} productName={product.name} />
           </div>
 
           {/* Product Info */}

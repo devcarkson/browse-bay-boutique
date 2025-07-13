@@ -12,10 +12,10 @@ const Cart = () => {
 
   if (cart.items.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-16 max-w-7xl">
         <div className="text-center">
           <ShoppingBag className="h-24 w-24 text-muted-foreground mx-auto mb-6" />
-          <h1 className="text-3xl font-bold mb-4">Your cart is empty</h1>
+          <h1 className="text-2xl md:text-3xl font-bold mb-4">Your cart is empty</h1>
           <p className="text-muted-foreground mb-8">
             Looks like you haven't added any products to your cart yet.
           </p>
@@ -32,17 +32,17 @@ const Cart = () => {
   const finalTotal = cart.total + shipping + tax;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Shopping Cart</h1>
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <h1 className="text-2xl md:text-3xl font-bold mb-8">Shopping Cart</h1>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-4">
           {cart.items.map((item) => (
             <Card key={item.product.id}>
-              <CardContent className="p-6">
-                <div className="flex gap-4">
-                  <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="w-full sm:w-20 md:w-24 h-20 md:h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 mx-auto sm:mx-0">
                     <img
                       src={item.product.image}
                       alt={item.product.name}
@@ -50,11 +50,11 @@ const Cart = () => {
                     />
                   </div>
                   
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-lg mb-1">
+                  <div className="flex-1 min-w-0 text-center sm:text-left">
+                    <h3 className="font-semibold text-base md:text-lg mb-1">
                       <Link 
                         to={`/product/${item.product.id}`}
-                        className="hover:text-primary"
+                        className="hover:text-primary break-words"
                       >
                         {item.product.name}
                       </Link>
@@ -62,9 +62,9 @@ const Cart = () => {
                     <p className="text-muted-foreground text-sm mb-2 line-clamp-2">
                       {item.product.description}
                     </p>
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                       <span className="text-lg font-bold text-primary">
-                        ${item.product.price.toFixed(2)}
+                        ₦{item.product.price.toLocaleString()}
                       </span>
                       <div className="flex items-center gap-2">
                         <div className="flex items-center border rounded-md">
@@ -104,7 +104,7 @@ const Cart = () => {
             </Card>
           ))}
 
-          <div className="flex justify-between items-center pt-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4">
             <Button variant="outline" onClick={clearCart}>
               Clear Cart
             </Button>
@@ -121,37 +121,37 @@ const Cart = () => {
               <CardTitle>Order Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex justify-between">
+              <div className="flex justify-between text-sm md:text-base">
                 <span>Subtotal ({cart.items.length} items)</span>
-                <span>${cart.total.toFixed(2)}</span>
+                <span>₦{cart.total.toLocaleString()}</span>
               </div>
               
-              <div className="flex justify-between">
+              <div className="flex justify-between text-sm md:text-base">
                 <span>Shipping</span>
                 <span>
                   {shipping === 0 ? (
                     <span className="text-green-600">Free</span>
                   ) : (
-                    `$${shipping.toFixed(2)}`
+                    `₦${shipping.toFixed(2)}`
                   )}
                 </span>
               </div>
               
-              <div className="flex justify-between">
+              <div className="flex justify-between text-sm md:text-base">
                 <span>Tax</span>
-                <span>${tax.toFixed(2)}</span>
+                <span>₦{tax.toLocaleString()}</span>
               </div>
               
               <Separator />
               
               <div className="flex justify-between text-lg font-bold">
                 <span>Total</span>
-                <span>${finalTotal.toFixed(2)}</span>
+                <span>₦{finalTotal.toLocaleString()}</span>
               </div>
 
-              {cart.total < 50 && (
+              {cart.total < 50000 && (
                 <p className="text-sm text-muted-foreground">
-                  Add ${(50 - cart.total).toFixed(2)} more for free shipping!
+                  Add ₦{(50000 - cart.total).toLocaleString()} more for free shipping!
                 </p>
               )}
 
