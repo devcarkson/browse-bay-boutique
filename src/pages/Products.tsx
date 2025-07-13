@@ -78,19 +78,32 @@ const Products = () => {
     <div className="w-full overflow-x-hidden">
       <div className="container mx-auto px-4 py-4 lg:py-8">
         <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
-          {/* Mobile Filter Toggle */}
+          {/* Mobile Header and Search */}
           {isMobile && (
-            <div className="flex justify-between items-center mb-4">
-              <h1 className="text-2xl font-bold">Products</h1>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2"
-              >
-                <Filter className="h-4 w-4" />
-                Filters
-              </Button>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h1 className="text-2xl font-bold">Products</h1>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="flex items-center gap-2"
+                >
+                  <Filter className="h-4 w-4" />
+                  Filters
+                </Button>
+              </div>
+              
+              {/* Mobile Search - Always visible */}
+              <div className="relative">
+                <Input
+                  placeholder="Search products..."
+                  value={filters.searchTerm || ''}
+                  onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
+                  className="pl-10"
+                />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              </div>
             </div>
           )}
 
@@ -121,20 +134,22 @@ const Products = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Search */}
-                <div>
-                  <Label htmlFor="search">Search</Label>
-                  <div className="relative mt-1">
-                    <Input
-                      id="search"
-                      placeholder="Search products..."
-                      value={filters.searchTerm || ''}
-                      onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
-                      className="pl-10"
-                    />
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                {/* Desktop Search */}
+                {!isMobile && (
+                  <div>
+                    <Label htmlFor="search">Search</Label>
+                    <div className="relative mt-1">
+                      <Input
+                        id="search"
+                        placeholder="Search products..."
+                        value={filters.searchTerm || ''}
+                        onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
+                        className="pl-10"
+                      />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Category */}
                 <div>
@@ -207,7 +222,7 @@ const Products = () => {
 
           {/* Products Grid */}
           <main className="flex-1 w-full overflow-hidden">
-            {/* Header - Hidden on mobile when filters are shown */}
+            {/* Desktop Header */}
             {!isMobile && (
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
@@ -309,7 +324,7 @@ const Products = () => {
             ) : (
               <div className={`grid gap-4 lg:gap-6 ${
                 viewMode === 'grid' 
-                  ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
+                  ? 'grid-cols-2 lg:grid-cols-3' // 2 products on mobile, 3 on larger screens
                   : 'grid-cols-1'
               }`}>
                 {filteredProducts.map((product) => (
