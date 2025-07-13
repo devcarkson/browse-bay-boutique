@@ -216,7 +216,7 @@ const Checkout = () => {
             </Card>
 
             {/* Payment Information */}
-            <Card>
+            {/* <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="h-5 w-5" />
@@ -260,7 +260,7 @@ const Checkout = () => {
                   </div>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
 
           {/* Order Summary */}
