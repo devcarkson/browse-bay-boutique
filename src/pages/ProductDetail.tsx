@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ShoppingCart, Heart, Share2, Star, MessageCircle, Copy } from 'lucide-react';
@@ -203,16 +204,16 @@ const ProductDetail = () => {
                   onClick={handleAddToCart}
                   disabled={product.stock === 0}
                   className="flex-1"
-                  size="lg"
+                  size="sm"
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   Add to Cart
                 </Button>
                 <div className="flex gap-3">
-                  <Button variant="outline" size="lg" onClick={handleAddToWishlist}>
+                  <Button variant="outline" size="sm" onClick={handleAddToWishlist}>
                     <Heart className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="lg" onClick={handleShare}>
+                  <Button variant="outline" size="sm" onClick={handleShare}>
                     <Share2 className="h-4 w-4" />
                   </Button>
                 </div>

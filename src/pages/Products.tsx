@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import ProductCard from '@/components/ProductCard';
+import SimpleProductCard from '@/components/SimpleProductCard';
 import { products, categories } from '@/data/mockData';
 import { FilterOptions } from '@/types';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -94,7 +94,7 @@ const Products = () => {
                 </Button>
               </div>
               
-              {/* Mobile Search - Always visible */}
+              {/* Mobile Search - Always visible and before filters */}
               <div className="relative">
                 <Input
                   placeholder="Search products..."
@@ -328,7 +328,7 @@ const Products = () => {
                   : 'grid-cols-1'
               }`}>
                 {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <SimpleProductCard key={product.id} product={product} />
                 ))}
               </div>
             )}
