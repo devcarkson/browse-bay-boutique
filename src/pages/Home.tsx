@@ -12,7 +12,7 @@ const Home = () => {
   return (
     <div className="min-h-screen w-full overflow-x-hidden">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary/10 to-secondary/10 py-20 w-full">
+      <section className="bg-gradient-to-r from-primary/10 to-secondary/10 py-10 w-full">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6">
             Welcome to <span className="text-primary">SGB</span>
@@ -31,6 +31,23 @@ const Home = () => {
               <Link to="/about">Learn More</Link>
             </Button>
           </div>
+        </div>
+      </section>
+
+      
+
+      
+      {/* Featured Products Slider */}
+      <section className="py-2 w-full">
+        <div className="container mx-auto px-4">
+          <FeaturedSlider products={featuredProducts} title="Featured Products" />
+        </div>
+      </section>
+
+      {/* New Arrivals Slider */}
+      <section className="py-2 bg-muted/30 w-full">
+        <div className="container mx-auto px-4">
+          <FeaturedSlider products={newArrivals} title="New Arrivals" />
         </div>
       </section>
 
@@ -60,21 +77,6 @@ const Home = () => {
               <p className="text-muted-foreground">Our customer support team is here to help you anytime, anywhere.</p>
             </div>
           </div>
-        </div>
-      </section>
-
-      
-      {/* Featured Products Slider */}
-      <section className="py-16 w-full">
-        <div className="container mx-auto px-4">
-          <FeaturedSlider products={featuredProducts} title="Featured Products" />
-        </div>
-      </section>
-
-      {/* New Arrivals Slider */}
-      <section className="py-16 bg-muted/30 w-full">
-        <div className="container mx-auto px-4">
-          <FeaturedSlider products={newArrivals} title="New Arrivals" />
         </div>
       </section>
     </div>

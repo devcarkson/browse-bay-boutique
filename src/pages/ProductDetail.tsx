@@ -204,7 +204,7 @@ const ProductDetail = () => {
                   onClick={handleAddToCart}
                   disabled={product.stock === 0}
                   className="flex-1"
-                  size="sm"
+                  size="default"
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   Add to Cart
