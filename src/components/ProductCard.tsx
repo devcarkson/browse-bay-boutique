@@ -3,10 +3,11 @@ import React from 'react';
 import { Star, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Product } from '@/types';
+import { Product } from '@/types/product.types';
 import { useCart } from '@/contexts/CartContext';
 import { Link } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
+import { getImageUrl } from '@/utils/imageUrl';
 
 interface ProductCardProps {
   product: Product;
@@ -19,14 +20,28 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSliderCard = false
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart(product);
+    
+    // Convert Django API product to local Product type for cart
+    const cartProduct = {
+      id: product.id.toString(),
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      image: getImageUrl(product.images?.find(img => img.is_primary)?.image || product.images?.[0]?.image || ''),
+      category: product.category.name,
+      stock: product.stock,
+      rating: product.rating,
+      reviewCount: product.review_count
+    };
+
+    addToCart(cartProduct);
     toast({
       title: "✨ Added to cart!",
       description: (
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted">
             <img
-              src={product.image}
+              src={cartProduct.image}
               alt={product.name}
               className="w-full h-full object-cover"
             />
@@ -53,6 +68,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSliderCard = false
     ));
   };
 
+  const primaryImage = product.images?.find(img => img.is_primary)?.image || 
+                      product.images?.[0]?.image || 
+                      '';
+
   if (isSliderCard) {
     return (
       <Link to={`/product/${product.id}`}>
@@ -60,7 +79,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSliderCard = false
           <CardContent className="p-3">
             <div className="aspect-square overflow-hidden rounded-lg mb-3 bg-gray-100">
               <img
-                src={product.image}
+                src={getImageUrl(primaryImage)}
                 alt={product.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
@@ -74,7 +93,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSliderCard = false
                   {renderStars(product.rating)}
                 </div>
                 <span className="text-xs text-muted-foreground">
-                  ({product.reviewCount || 0})
+                  ({product.review_count || 0})
                 </span>
               </div>
             )}
@@ -94,7 +113,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSliderCard = false
         <CardContent className="p-4">
           <div className="aspect-square overflow-hidden rounded-lg mb-4 bg-gray-100">
             <img
-              src={product.image}
+              src={getImageUrl(primaryImage)}
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
@@ -111,7 +130,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSliderCard = false
                 {renderStars(product.rating)}
               </div>
               <span className="text-sm text-muted-foreground">
-                ({product.reviewCount || 0})
+                ({product.review_count || 0})
               </span>
             </div>
           )}

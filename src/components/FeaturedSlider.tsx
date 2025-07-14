@@ -2,7 +2,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, CarouselApi } from '@/components/ui/carousel';
 import ProductCard from './ProductCard';
-import { Product } from '@/types';
+import { Product } from '@/types/product.types';
 
 interface FeaturedSliderProps {
   products: Product[];

@@ -9,7 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import SimpleProductCard from '@/components/SimpleProductCard';
-import { products, categories } from '@/data/mockData';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import ErrorMessage from '@/components/ErrorMessage';
+import { useProducts } from '@/hooks/useProducts';
 import { FilterOptions } from '@/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -26,39 +28,49 @@ const Products = () => {
   });
   const [sortBy, setSortBy] = useState<string>('name');
 
-  const filteredProducts = useMemo(() => {
-    let filtered = products.filter(product => {
-      const matchesSearch = !filters.searchTerm || 
-        product.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-        product.description.toLowerCase().includes(filters.searchTerm.toLowerCase());
-      
-      const matchesCategory = !filters.category || filters.category === 'all' || product.category === filters.category;
-      
-      const matchesPrice = product.price >= (filters.minPrice || 0) && 
-        product.price <= (filters.maxPrice || 1000);
-      
-      const matchesStock = !filters.inStock || product.stock > 0;
-
-      return matchesSearch && matchesCategory && matchesPrice && matchesStock;
-    });
-
-    // Sort products
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'price-low':
-          return a.price - b.price;
-        case 'price-high':
-          return b.price - a.price;
-        case 'rating':
-          return (b.rating || 0) - (a.rating || 0);
-        case 'name':
-        default:
-          return a.name.localeCompare(b.name);
-      }
-    });
-
-    return filtered;
+  // Build API params from filters
+  const apiParams = useMemo(() => {
+    const params: Record<string, any> = {};
+    
+    if (filters.searchTerm) {
+      params.search = filters.searchTerm;
+    }
+    if (filters.category) {
+      params.category = filters.category;
+    }
+    if (filters.minPrice) {
+      params.min_price = filters.minPrice;
+    }
+    if (filters.maxPrice) {
+      params.max_price = filters.maxPrice;
+    }
+    if (filters.inStock) {
+      params.in_stock = true;
+    }
+    
+    // Add ordering
+    switch (sortBy) {
+      case 'price-low':
+        params.ordering = 'price';
+        break;
+      case 'price-high':
+        params.ordering = '-price';
+        break;
+      case 'rating':
+        params.ordering = '-rating';
+        break;
+      case 'name':
+      default:
+        params.ordering = 'name';
+        break;
+    }
+    
+    return params;
   }, [filters, sortBy]);
+
+  const { data: productsData, isLoading, error, refetch } = useProducts(apiParams);
+
+  const products = productsData?.results || [];
 
   const handleFilterChange = (key: keyof FilterOptions, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -73,6 +85,30 @@ const Products = () => {
       inStock: false
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="w-full overflow-x-hidden">
+        <div className="container mx-auto px-4 py-8">
+          <LoadingSpinner size="lg" className="py-16" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full overflow-x-hidden">
+        <div className="container mx-auto px-4 py-8">
+          <ErrorMessage 
+            message="Failed to load products"
+            onRetry={refetch}
+            className="my-8"
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full overflow-x-hidden">
@@ -151,24 +187,6 @@ const Products = () => {
                   </div>
                 )}
 
-                {/* Category */}
-                <div>
-                  <Label>Category</Label>
-                  <Select value={filters.category || 'all'} onValueChange={(value) => handleFilterChange('category', value === 'all' ? '' : value)}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="All Categories" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
-                      {categories.map(category => (
-                        <SelectItem key={category.id} value={category.slug}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 {/* Price Range */}
                 <div>
                   <Label>Price Range: ₦{filters.minPrice} - ₦{filters.maxPrice}</Label>
@@ -228,7 +246,7 @@ const Products = () => {
                 <div>
                   <h1 className="text-3xl font-bold">Products</h1>
                   <p className="text-muted-foreground">
-                    Showing {filteredProducts.length} of {products.length} products
+                    Showing {products.length} products
                   </p>
                 </div>
 
@@ -273,7 +291,7 @@ const Products = () => {
             {isMobile && !showFilters && (
               <div className="mb-4">
                 <p className="text-sm text-muted-foreground mb-3">
-                  Showing {filteredProducts.length} of {products.length} products
+                  Showing {products.length} products
                 </p>
                 
                 <div className="flex items-center justify-between gap-2">
@@ -314,7 +332,7 @@ const Products = () => {
             )}
 
             {/* Products */}
-            {filteredProducts.length === 0 ? (
+            {products.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-lg text-muted-foreground">No products found matching your criteria.</p>
                 <Button onClick={clearFilters} className="mt-4">
@@ -324,10 +342,10 @@ const Products = () => {
             ) : (
               <div className={`grid gap-4 lg:gap-6 ${
                 viewMode === 'grid' 
-                  ? 'grid-cols-2 lg:grid-cols-3' // 2 products on mobile, 3 on larger screens
+                  ? 'grid-cols-2 lg:grid-cols-3'
                   : 'grid-cols-1'
               }`}>
-                {filteredProducts.map((product) => (
+                {products.map((product) => (
                   <SimpleProductCard key={product.id} product={product} />
                 ))}
               </div>

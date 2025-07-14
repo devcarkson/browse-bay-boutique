@@ -9,11 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import FeaturedSlider from '@/components/FeaturedSlider';
 import RatingStars from '@/components/RatingStars';
-import Footer from '@/components/Footer';
-import { products } from '@/data/mockData';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import ErrorMessage from '@/components/ErrorMessage';
+import { useProduct } from '@/hooks/useProduct';
+import { useFeaturedProducts } from '@/hooks/useProducts';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from '@/hooks/use-toast';
 import ProductImageSlider from '@/components/ProductImageSlider';
+import { getImageUrl } from '@/utils/imageUrl';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -23,40 +26,65 @@ const ProductDetail = () => {
   const [review, setReview] = useState('');
   const [showReviewForm, setShowReviewForm] = useState(false);
   
-  const product = products.find(p => p.id === id);
-  const similarProducts = products.filter(p => 
-    p.category === product?.category && p.id !== product?.id
-  ).slice(0, 8);
+  const { data: product, isLoading, error, refetch } = useProduct(id!);
+  const { data: featuredProducts } = useFeaturedProducts();
 
-  // Mock multiple images for demonstration - in real app this would come from product data
-  const productImages = product ? [
-    product.image,
-    product.image, // You can replace these with actual different images
-    product.image
-  ] : [];
-
-  if (!product) {
+  if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Product not found</h1>
-          <Button asChild>
-            <Link to="/products">Back to Products</Link>
-          </Button>
+      <div className="min-h-screen w-full overflow-x-hidden">
+        <div className="container mx-auto px-4 py-8">
+          <LoadingSpinner size="lg" className="py-16" />
         </div>
       </div>
     );
   }
 
+  if (error || !product) {
+    return (
+      <div className="min-h-screen w-full overflow-x-hidden">
+        <div className="container mx-auto px-4 py-8">
+          <ErrorMessage 
+            message="Product not found or failed to load"
+            onRetry={refetch}
+            className="my-8"
+          />
+          <div className="text-center mt-4">
+            <Button asChild>
+              <Link to="/products">Back to Products</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Get product images with proper URLs
+  const productImages = product.images && product.images.length > 0 
+    ? product.images.map(img => getImageUrl(img.image))
+    : ['/placeholder.svg'];
+
   const handleAddToCart = () => {
-    addToCart(product, quantity);
+    // Convert Django API product to local Product type for cart
+    const cartProduct = {
+      id: product.id.toString(),
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      image: productImages[0],
+      category: product.category.name,
+      stock: product.stock,
+      rating: product.rating,
+      reviewCount: product.review_count
+    };
+
+    addToCart(cartProduct, quantity);
     toast({
       title: "✨ Added to cart!",
       description: (
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted">
             <img
-              src={product.image}
+              src={productImages[0]}
               alt={product.name}
               className="w-full h-full object-cover"
             />
@@ -146,7 +174,7 @@ const ProductDetail = () => {
                 <div className="flex items-center gap-2 mb-4">
                   <RatingStars rating={product.rating} readonly />
                   <span className="text-sm text-muted-foreground">
-                    {product.rating} ({product.reviewCount || 0} reviews)
+                    {product.rating} ({product.review_count || 0} reviews)
                   </span>
                 </div>
               )}
@@ -155,6 +183,11 @@ const ProductDetail = () => {
                 <span className="text-2xl lg:text-3xl font-bold text-primary">
                   ₦{product.price.toLocaleString()}
                 </span>
+                {product.discount_price && (
+                  <span className="text-lg text-muted-foreground line-through">
+                    ₦{product.discount_price.toLocaleString()}
+                  </span>
+                )}
                 <Badge variant={product.stock > 0 ? "default" : "destructive"}>
                   {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
                 </Badge>
@@ -229,7 +262,7 @@ const ProductDetail = () => {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Category:</span>
-                    <span className="capitalize">{product.category}</span>
+                    <span className="capitalize">{product.category.name}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Availability:</span>
@@ -290,13 +323,12 @@ const ProductDetail = () => {
         </div>
 
         {/* Similar Products */}
-        {similarProducts.length > 0 && (
+        {featuredProducts && featuredProducts.length > 0 && (
           <div className="mt-16">
-            <FeaturedSlider products={similarProducts} title="Similar Products" />
+            <FeaturedSlider products={featuredProducts} title="You Might Also Like" />
           </div>
         )}
       </div>
-      
     </div>
   );
 };

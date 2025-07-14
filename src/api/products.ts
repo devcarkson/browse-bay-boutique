@@ -1,5 +1,5 @@
+
 import apiClient from './client';
-// import apiClient from './client';
 import { Product, ProductListResponse } from '@/types/product.types';
 
 export const ProductService = {
@@ -10,6 +10,11 @@ export const ProductService = {
   
   getFeaturedProducts: async (): Promise<Product[]> => {
     const { data } = await apiClient.get('/products/featured/');
-    return data.results;
+    return data.results || data;
+  },
+
+  getProduct: async (id: string): Promise<Product> => {
+    const { data } = await apiClient.get(`/products/${id}/`);
+    return data;
   }
 };
