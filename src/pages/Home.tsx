@@ -40,22 +40,27 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Featured Products Slider */}
-      <section className="py-2 w-full">
-        <div className="container mx-auto px-4">
-          {featuredLoading ? (
-            <LoadingSpinner size="lg" className="py-16" />
-          ) : featuredError ? (
-            <ErrorMessage 
-              message="Failed to load featured products"
-              onRetry={refetchFeatured}
-              className="my-8"
-            />
-          ) : featuredProducts && featuredProducts.length > 0 ? (
+      {/* Featured Products Slider - Only show if we have featured products */}
+      {!featuredLoading && !featuredError && featuredProducts && featuredProducts.length > 0 && (
+        <section className="py-12 w-full">
+          <div className="container mx-auto px-4">
             <FeaturedSlider products={featuredProducts} title="Featured Products" />
-          ) : null}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
+
+      {/* Show error message only if explicitly requested */}
+      {featuredError && (
+        <section className="py-8 w-full">
+          <div className="container mx-auto px-4">
+            <ErrorMessage 
+              message="Unable to load featured products at the moment"
+              onRetry={refetchFeatured}
+              className="my-4"
+            />
+          </div>
+        </section>
+      )}
 
       {/* Products Grid Section */}
       <section className="py-16 w-full">
