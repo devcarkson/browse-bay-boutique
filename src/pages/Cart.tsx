@@ -65,7 +65,7 @@ const Cart = () => {
                     
                     <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                       <span className="text-lg font-bold text-primary">
-                        ₦{item.product.price.toLocaleString()}
+                        ₦{Number(item.product.price).toLocaleString('en-NG')}
                       </span>
                       
                       <div className="flex items-center justify-between md:justify-end gap-2">

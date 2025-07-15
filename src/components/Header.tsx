@@ -1,16 +1,37 @@
-
-import React, { useState } from 'react';
-import { ShoppingCart, Search, User, Menu, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useCart } from '@/contexts/CartContext';
-import { Link } from 'react-router-dom';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import React, { useState } from "react";
+import {
+  ShoppingCart,
+  Search,
+  User,
+  Menu,
+  ChevronDown,
+  LogOut,
+  LayoutDashboard,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useCart } from "@/contexts/CartContext";
+import { Link, useNavigate } from "react-router-dom";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
   const { getItemCount } = useCart();
   const itemCount = getItemCount();
   const [isOpen, setIsOpen] = useState(false);
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
     <header className="border-b bg-background sticky top-0 z-50">
@@ -21,10 +42,12 @@ const Header = () => {
             <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
               <span className="text-primary-foreground font-bold">S</span>
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">SGB</span>
+            <span className="text-xl font-bold bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
+              SGB
+            </span>
           </Link>
 
-          {/* Search Bar */}
+          {/* Search */}
           <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
             <div className="relative w-full">
               <Input
@@ -36,28 +59,46 @@ const Header = () => {
             </div>
           </div>
 
-          {/* Navigation */}
+          {/* Nav */}
           <nav className="hidden md:flex items-center space-x-6">
-            <Link to="/products" className="text-foreground hover:text-primary transition-colors">
-              Products
-            </Link>
-            <Link to="/about" className="text-foreground hover:text-primary transition-colors">
-              About
-            </Link>
-            <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
-              Contact
-            </Link>
+            <Link to="/products" className="hover:text-primary">Products</Link>
+            <Link to="/about" className="hover:text-primary">About</Link>
+            <Link to="/contact" className="hover:text-primary">Contact</Link>
           </nav>
 
-          {/* User Actions */}
+          {/* Right Actions */}
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
-              <Link to="/login">
-                <User className="h-4 w-4" />
-                <span className="hidden sm:inline ml-2">Login</span>
-              </Link>
-            </Button>
-            
+            {/* Authenticated Dropdown */}
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span className="hidden sm:inline">Account</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/login">
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-2">Login</span>
+                </Link>
+              </Button>
+            )}
+
+            {/* Cart */}
             <Button variant="ghost" size="sm" className="relative" asChild>
               <Link to="/cart">
                 <ShoppingCart className="h-4 w-4" />
@@ -70,7 +111,7 @@ const Header = () => {
               </Link>
             </Button>
 
-            {/* Mobile Menu */}
+            {/* Mobile Nav */}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="sm" className="md:hidden">
@@ -89,37 +130,20 @@ const Header = () => {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   </div>
 
-                  {/* Mobile Navigation */}
+                  {/* Mobile Links */}
                   <nav className="flex flex-col space-y-4">
-                    <Link
-                      to="/products"
-                      className="text-foreground hover:text-primary transition-colors py-2"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      Products
-                    </Link>
-                    <Link
-                      to="/about"
-                      className="text-foreground hover:text-primary transition-colors py-2"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      About
-                    </Link>
-                    <Link
-                      to="/contact"
-                      className="text-foreground hover:text-primary transition-colors py-2"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      Contact
-                    </Link>
-                    <Link
-                      to="/login"
-                      className="text-foreground hover:text-primary transition-colors py-2 flex items-center"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <User className="h-4 w-4 mr-2" />
-                      Login
-                    </Link>
+                    <Link to="/products" onClick={() => setIsOpen(false)}>Products</Link>
+                    <Link to="/about" onClick={() => setIsOpen(false)}>About</Link>
+                    <Link to="/contact" onClick={() => setIsOpen(false)}>Contact</Link>
+
+                    {isAuthenticated ? (
+                      <>
+                        <Link to="/dashboard" onClick={() => setIsOpen(false)}>Dashboard</Link>
+                        <button onClick={() => { handleLogout(); setIsOpen(false); }} className="text-left">Logout</button>
+                      </>
+                    ) : (
+                      <Link to="/login" onClick={() => setIsOpen(false)}>Login</Link>
+                    )}
                   </nav>
                 </div>
               </SheetContent>

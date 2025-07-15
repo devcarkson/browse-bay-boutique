@@ -29,7 +29,7 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({ product }) => {
     : '';
 
   return (
-    <Link to={`/product/${product.id}`}>
+    <Link to={`/product/${product.slug}`}>
       <Card className="h-full hover:shadow-lg transition-shadow duration-300 group">
         <CardContent className="p-3 md:p-4">
           {/* Product image */}

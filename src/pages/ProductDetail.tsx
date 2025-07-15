@@ -19,14 +19,14 @@ import ProductImageSlider from '@/components/ProductImageSlider';
 import { getImageUrl } from '@/utils/imageUrl';
 
 const ProductDetail = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [userRating, setUserRating] = useState(0);
   const [review, setReview] = useState('');
   const [showReviewForm, setShowReviewForm] = useState(false);
   
-  const { data: product, isLoading, error, refetch } = useProduct(id!);
+  const { data: product, isLoading, error, refetch } = useProduct(slug!);
   const { data: featuredProducts } = useFeaturedProducts();
 
   if (isLoading) {
@@ -59,9 +59,10 @@ const ProductDetail = () => {
   }
 
   // Get product images with proper URLs
-  const productImages = product.images && product.images.length > 0 
-    ? product.images.map(img => getImageUrl(img.image))
-    : ['/placeholder.svg'];
+  const productImages = Array.isArray(product.images) && product.images.length > 0
+  ? product.images.map(img => getImageUrl(typeof img === 'string' ? img : img.image))
+  : ['/placeholder.svg'];
+
 
   const handleAddToCart = () => {
     // Convert Django API product to local Product type for cart
@@ -181,11 +182,11 @@ const ProductDetail = () => {
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
                 <span className="text-2xl lg:text-3xl font-bold text-primary">
-                  ₦{product.price.toLocaleString()}
+                  ₦{Number(product.price).toLocaleString('en-NG')}
                 </span>
                 {product.discount_price && (
                   <span className="text-lg text-muted-foreground line-through">
-                    ₦{product.discount_price.toLocaleString()}
+                    ₦{Number(product.price).toLocaleString('en-NG')}
                   </span>
                 )}
                 <Badge variant={product.stock > 0 ? "default" : "destructive"}>

@@ -1,48 +1,87 @@
-
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
+import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from '@/hooks/use-toast';
 
 const Signup = () => {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
     phone: '',
     password: '',
     confirmPassword: '',
-    acceptTerms: false
+    acceptTerms: false,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
-      return;
-    }
-
-    if (!formData.acceptTerms) {
-      alert('Please accept the terms and conditions');
-      return;
-    }
-
-    // TODO: Implement signup logic
-    console.log('Signup attempt:', formData);
-  };
+  const [errors, setErrors] = useState<{ [key: string]: string[] }>({});
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors({});
+    setLoading(true);
+
+    if (formData.password !== formData.confirmPassword) {
+      setErrors({ confirmPassword: ['Passwords do not match'] });
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.acceptTerms) {
+      setErrors({ acceptTerms: ['You must accept the terms and conditions'] });
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const payload = {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+      };
+
+      await axios.post('http://127.0.0.1:8000/api/auth/register/', payload);
+
+      toast({
+        title: '🎉 Account created!',
+        description: 'You can now log in with your credentials.',
+        variant: 'default',
+      });
+
+      setTimeout(() => {
+        setLoading(false);
+        navigate('/login');
+      }, 1500);
+    } catch (error: any) {
+      if (error.response?.status === 400) {
+        setErrors(error.response.data);
+      } else {
+        toast({
+          title: 'Something went wrong!',
+          description: 'Please try again later.',
+          variant: 'destructive',
+        });
+      }
+      setLoading(false);
+    }
   };
 
   return (
@@ -58,17 +97,18 @@ const Signup = () => {
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="name" className="text-pink-700 font-semibold">Full Name</Label>
+                <Label htmlFor="username" className="text-pink-700 font-semibold">Username</Label>
                 <Input
-                  id="name"
-                  name="name"
+                  id="username"
+                  name="username"
                   type="text"
-                  placeholder="Enter your full name"
-                  value={formData.name}
+                  placeholder="Enter your username"
+                  value={formData.username}
                   onChange={handleInputChange}
                   className="border-pink-200 focus:border-pink-400"
                   required
                 />
+                {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username[0]}</p>}
               </div>
 
               <div>
@@ -83,6 +123,7 @@ const Signup = () => {
                   className="border-pink-200 focus:border-pink-400"
                   required
                 />
+                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email[0]}</p>}
               </div>
 
               <div>
@@ -97,6 +138,7 @@ const Signup = () => {
                   className="border-pink-200 focus:border-pink-400"
                   required
                 />
+                {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone[0]}</p>}
               </div>
 
               <div>
@@ -116,16 +158,13 @@ const Signup = () => {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-pink-500"
+                    className="absolute right-0 top-0 h-full px-3 py-2 text-pink-500"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
+                {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password[0]}</p>}
               </div>
 
               <div>
@@ -145,23 +184,20 @@ const Signup = () => {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-pink-500"
+                    className="absolute right-0 top-0 h-full px-3 py-2 text-pink-500"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
+                {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword[0]}</p>}
               </div>
 
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="acceptTerms"
                   checked={formData.acceptTerms}
-                  onCheckedChange={(checked) => 
+                  onCheckedChange={(checked) =>
                     setFormData(prev => ({ ...prev, acceptTerms: checked as boolean }))
                   }
                 />
@@ -176,9 +212,24 @@ const Signup = () => {
                   </Link>
                 </Label>
               </div>
+              {errors.acceptTerms && <p className="text-red-500 text-sm mt-1">{errors.acceptTerms[0]}</p>}
 
-              <Button type="submit" className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-semibold py-3">
-                Create Account
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white font-semibold py-3 flex items-center justify-center"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                    Creating...
+                  </span>
+                ) : (
+                  'Create Account'
+                )}
               </Button>
             </form>
 

@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { ProductService } from '@/api/products';
 
@@ -15,3 +14,11 @@ export const useFeaturedProducts = () => {
     queryFn: () => ProductService.getFeaturedProducts(),
   });
 };
+
+export const useNewArrivalProducts = () => {
+  return useQuery({
+    queryKey: ['new-arrival-products'],
+    queryFn: () => ProductService.getNewArrivalProducts(),
+  });
+};
+
