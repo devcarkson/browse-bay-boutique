@@ -23,6 +23,7 @@ import ProtectedRoute from "@/components/ProtectedRoute"; // ✅ Import protecte
 import Profile from "@/pages/Profile";
 import Addresses from "@/pages/Addresses";
 import Settings from "@/pages/Settings";
+import PaymentCallback from "@/pages/PaymentCallback";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
                   <Route path="/product/:slug" element={<ProductDetail />} />
                   <Route path="/cart" element={<Cart />} />
                   <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/payment/callback" element={<PaymentCallback />} />
                   <Route path="/dashboard" element={
                     <ProtectedRoute>
                       <Dashboard />
