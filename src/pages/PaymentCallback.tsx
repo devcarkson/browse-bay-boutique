@@ -47,8 +47,11 @@ const PaymentCallback = () => {
             orderId: pendingOrderId
           });
           
-          // Clear cart and stored order data
+          // Only clear cart on successful payment
+          console.log('Payment successful - clearing cart');
           clearCart();
+          
+          // Clean up stored order data
           localStorage.removeItem('pending_order_ref');
           localStorage.removeItem('pending_order_id');
           
@@ -56,13 +59,19 @@ const PaymentCallback = () => {
           
         } else if (statusParam === 'cancelled') {
           setStatus('failed');
-          setMessage('Payment was cancelled. You can try again by returning to checkout.');
+          setMessage('Payment was cancelled. Your cart items are still saved. You can try again by returning to checkout.');
           toast.error('Payment was cancelled');
+          
+          // Don't clear cart on cancelled payment
+          console.log('Payment cancelled - keeping cart items');
           
         } else {
           setStatus('failed');
-          setMessage('Payment failed or was not completed. Please try again or contact support if you were charged.');
+          setMessage('Payment failed or was not completed. Your cart items are still saved. Please try again or contact support if you were charged.');
           toast.error('Payment failed');
+          
+          // Don't clear cart on failed payment
+          console.log('Payment failed - keeping cart items');
         }
       }, 2000); // 2 second delay to simulate verification
     };

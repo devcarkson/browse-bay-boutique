@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 interface AuthContextType {
@@ -23,6 +24,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const savedEmail = storage.getItem("email");
 
     if (savedToken && savedUserId && savedEmail) {
+      console.log('Restoring auth state from storage:', { 
+        hasToken: !!savedToken, 
+        userId: savedUserId, 
+        email: savedEmail 
+      });
       setToken(savedToken);
       setUserId(Number(savedUserId));
       setEmail(savedEmail);
@@ -31,6 +37,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const login = (newToken: string, newUserId: number, newEmail: string, remember: boolean) => {
     const storage = remember ? localStorage : sessionStorage;
+    console.log('Logging in user:', { userId: newUserId, email: newEmail, remember });
+    
     storage.setItem("token", newToken);
     storage.setItem("userId", String(newUserId));
     storage.setItem("email", newEmail);
@@ -41,6 +49,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = () => {
+    console.log('Logging out user');
     localStorage.clear();
     sessionStorage.clear();
     setToken(null);
