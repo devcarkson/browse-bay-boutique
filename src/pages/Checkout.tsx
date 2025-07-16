@@ -21,63 +21,107 @@ interface CheckoutFormData {
 
 const Checkout = () => {
   const { cart, clearCart } = useCart();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCheckout = async (formData: CheckoutFormData) => {
-    if (!token) {
-      toast.error("You need to log in to place an order");
+    console.log('Starting checkout process with form data:', formData);
+    
+    // Validate authentication
+    if (!token || !user) {
+      console.log('User not authenticated, redirecting to login');
+      toast.error("Please log in to complete your order");
       navigate(`/login?redirect=/checkout`);
       return;
     }
 
-    if (cart.items.length === 0) {
-      toast.error("Your cart is empty");
+    // Validate cart
+    if (!cart || !cart.items || cart.items.length === 0) {
+      console.log('Cart is empty');
+      toast.error("Your cart is empty. Please add items before checkout.");
+      navigate('/products');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      console.log('Starting checkout process...');
+      console.log('Cart items:', cart.items);
       
-      // Prepare cart items for the backend
-      const cartItems = cart.items.map(item => ({
-        product_id: item.product.id,
-        quantity: item.quantity,
-        price: item.product.price
-      }));
+      // Prepare cart items for the backend with proper structure
+      const cartItems = cart.items.map((item, index) => {
+        console.log(`Cart item ${index}:`, item);
+        return {
+          product_id: String(item.product.id),
+          quantity: Number(item.quantity),
+          price: Number(item.product.price)
+        };
+      });
 
+      console.log('Prepared cart items:', cartItems);
+
+      // Prepare checkout data
       const checkoutData: CheckoutData = {
-        ...formData,
+        shipping_address: formData.shipping_address.trim(),
+        shipping_city: formData.shipping_city.trim(),
+        shipping_state: formData.shipping_state,
+        shipping_country: formData.shipping_country,
+        shipping_zip_code: formData.shipping_zip_code.trim(),
+        payment_method: formData.payment_method || 'flutterwave',
         cart_items: cartItems
       };
       
+      console.log('Final checkout data:', JSON.stringify(checkoutData, null, 2));
+      
+      // Create checkout
       const response = await createCheckout(checkoutData);
       
-      console.log('Checkout successful, redirecting to:', response.payment_url);
+      console.log('Checkout response:', response);
       
-      // Store order reference for potential verification
-      if (response.reference) {
-        localStorage.setItem('pending_order_ref', response.reference);
+      if (!response.payment_url) {
+        throw new Error('No payment URL received from server');
       }
       
-      // Clear cart on successful checkout initiation
-      clearCart();
+      // Store order reference for verification
+      if (response.reference) {
+        localStorage.setItem('pending_order_ref', response.reference);
+        localStorage.setItem('pending_order_id', response.order_id);
+      }
       
-      // Redirect to Flutterwave payment page
-      window.location.href = response.payment_url;
+      console.log('Redirecting to payment URL:', response.payment_url);
+      
+      // Show success message
+      toast.success('Redirecting to payment gateway...');
+      
+      // Small delay to show the toast
+      setTimeout(() => {
+        // Redirect to Flutterwave payment page
+        window.location.href = response.payment_url;
+      }, 1000);
       
     } catch (error: any) {
-      console.error('Checkout failed:', error);
-      toast.error(error.message || "Checkout failed. Please try again.");
+      console.error('Checkout failed with error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        response: error.response
+      });
+      
+      let errorMessage = 'Checkout failed. Please try again.';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (cart.items.length === 0) {
+  // Show empty cart message
+  if (!cart || !cart.items || cart.items.length === 0) {
     return (
       <div className="container mx-auto px-4 py-16">
         <div className="text-center">

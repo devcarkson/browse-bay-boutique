@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { User } from 'lucide-react';
+import { User, Loader } from 'lucide-react';
 
 interface CheckoutFormData {
   shipping_address: string;
@@ -22,11 +22,26 @@ interface CheckoutFormProps {
   isLoading: boolean;
 }
 
+const nigerianStates = [
+  'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 
+  'Borno', 'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 
+  'FCT (Abuja)', 'Gombe', 'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 
+  'Kebbi', 'Kogi', 'Kwara', 'Lagos', 'Nasarawa', 'Niger', 'Ogun', 'Ondo', 
+  'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara'
+];
+
 const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit, isLoading }) => {
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<CheckoutFormData>({
+  const { 
+    register, 
+    handleSubmit, 
+    watch, 
+    setValue, 
+    formState: { errors } 
+  } = useForm<CheckoutFormData>({
     defaultValues: {
       payment_method: 'flutterwave',
       shipping_country: 'Nigeria',
+      shipping_state: ''
     }
   });
 
@@ -39,6 +54,21 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit, isLoading }) => {
 
   const handleCountryChange = (value: string) => {
     setValue('shipping_country', value);
+    // Reset state when country changes
+    if (value !== 'Nigeria') {
+      setValue('shipping_state', '');
+    }
+  };
+
+  const handleFormSubmit = (data: CheckoutFormData) => {
+    console.log('Form submitted with data:', data);
+    
+    // Validate required fields
+    if (!data.shipping_state) {
+      return;
+    }
+    
+    onSubmit(data);
   };
 
   return (
@@ -49,13 +79,17 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit, isLoading }) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
           <div>
-            <Label htmlFor="shipping_address">Address *</Label>
+            <Label htmlFor="shipping_address">Street Address *</Label>
             <Input
               id="shipping_address"
-              {...register('shipping_address', { required: 'Address is required' })}
-              placeholder="Enter your full address"
+              {...register('shipping_address', { 
+                required: 'Street address is required',
+                minLength: { value: 10, message: 'Address must be at least 10 characters' }
+              })}
+              placeholder="Enter your complete street address"
+              disabled={isLoading}
             />
             {errors.shipping_address && (
               <p className="text-sm text-red-500 mt-1">{errors.shipping_address.message}</p>
@@ -67,39 +101,41 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit, isLoading }) => {
               <Label htmlFor="shipping_city">City *</Label>
               <Input
                 id="shipping_city"
-                {...register('shipping_city', { required: 'City is required' })}
-                placeholder="City"
+                {...register('shipping_city', { 
+                  required: 'City is required',
+                  minLength: { value: 2, message: 'City name must be at least 2 characters' }
+                })}
+                placeholder="Enter city name"
+                disabled={isLoading}
               />
               {errors.shipping_city && (
                 <p className="text-sm text-red-500 mt-1">{errors.shipping_city.message}</p>
               )}
             </div>
             <div>
-              <Label htmlFor="shipping_state">State *</Label>
-              <Select value={watchedState} onValueChange={handleStateChange} required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select State" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Lagos">Lagos</SelectItem>
-                  <SelectItem value="Abuja">Abuja (FCT)</SelectItem>
-                  <SelectItem value="Kano">Kano</SelectItem>
-                  <SelectItem value="Rivers">Rivers</SelectItem>
-                  <SelectItem value="Oyo">Oyo</SelectItem>
-                  <SelectItem value="Kaduna">Kaduna</SelectItem>
-                  <SelectItem value="Ogun">Ogun</SelectItem>
-                  <SelectItem value="Imo">Imo</SelectItem>
-                  <SelectItem value="Plateau">Plateau</SelectItem>
-                  <SelectItem value="Akwa Ibom">Akwa Ibom</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="shipping_zip_code">ZIP/Postal Code *</Label>
+              <Input
+                id="shipping_zip_code"
+                {...register('shipping_zip_code', { 
+                  required: 'ZIP/Postal code is required',
+                  pattern: {
+                    value: /^[0-9]{6}$/,
+                    message: 'Please enter a valid 6-digit postal code'
+                  }
+                })}
+                placeholder="123456"
+                disabled={isLoading}
+              />
+              {errors.shipping_zip_code && (
+                <p className="text-sm text-red-500 mt-1">{errors.shipping_zip_code.message}</p>
+              )}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="shipping_country">Country *</Label>
-              <Select value={watchedCountry} onValueChange={handleCountryChange} required>
+              <Select value={watchedCountry} onValueChange={handleCountryChange} disabled={isLoading}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Country" />
                 </SelectTrigger>
@@ -112,20 +148,68 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit, isLoading }) => {
               </Select>
             </div>
             <div>
-              <Label htmlFor="shipping_zip_code">ZIP Code *</Label>
-              <Input
-                id="shipping_zip_code"
-                {...register('shipping_zip_code', { required: 'ZIP code is required' })}
-                placeholder="ZIP Code"
-              />
-              {errors.shipping_zip_code && (
-                <p className="text-sm text-red-500 mt-1">{errors.shipping_zip_code.message}</p>
+              <Label htmlFor="shipping_state">State/Region *</Label>
+              <Select 
+                value={watchedState} 
+                onValueChange={handleStateChange} 
+                disabled={isLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select State" />
+                </SelectTrigger>
+                <SelectContent>
+                  {watchedCountry === 'Nigeria' ? (
+                    nigerianStates.map((state) => (
+                      <SelectItem key={state} value={state}>
+                        {state}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="Other">Other</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              {!watchedState && (
+                <p className="text-sm text-red-500 mt-1">Please select a state</p>
               )}
             </div>
           </div>
 
-          <Button type="submit" className="w-full mt-6" disabled={isLoading}>
-            {isLoading ? 'Processing...' : 'Pay with Flutterwave'}
+          <div className="pt-4">
+            <Label>Payment Method</Label>
+            <div className="mt-2 p-3 border rounded-lg bg-muted/50">
+              <div className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  id="flutterwave"
+                  value="flutterwave"
+                  {...register('payment_method')}
+                  checked
+                  readOnly
+                />
+                <label htmlFor="flutterwave" className="font-medium">
+                  Pay with Flutterwave
+                </label>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Secure payment via Flutterwave (Cards, Bank Transfer, USSD)
+              </p>
+            </div>
+          </div>
+
+          <Button 
+            type="submit" 
+            className="w-full mt-6" 
+            disabled={isLoading || !watchedState}
+          >
+            {isLoading ? (
+              <>
+                <Loader className="h-4 w-4 mr-2 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              'Proceed to Payment'
+            )}
           </Button>
         </form>
       </CardContent>

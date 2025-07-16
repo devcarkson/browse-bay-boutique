@@ -13,34 +13,61 @@ const PaymentCallback = () => {
   const { clearCart } = useCart();
   const [status, setStatus] = useState<'loading' | 'success' | 'failed'>('loading');
   const [message, setMessage] = useState('');
+  const [orderDetails, setOrderDetails] = useState<any>(null);
 
   useEffect(() => {
-    const transactionId = searchParams.get('transaction_id');
-    const txRef = searchParams.get('tx_ref');
-    const statusParam = searchParams.get('status');
+    const handlePaymentCallback = () => {
+      const transactionId = searchParams.get('transaction_id');
+      const txRef = searchParams.get('tx_ref');
+      const statusParam = searchParams.get('status');
+      const flwRef = searchParams.get('flw_ref');
+      
+      console.log('Payment callback received:', { 
+        transactionId, 
+        txRef, 
+        statusParam, 
+        flwRef,
+        allParams: Object.fromEntries(searchParams.entries())
+      });
 
-    console.log('Payment callback params:', { transactionId, txRef, statusParam });
+      // Get stored order details
+      const pendingOrderRef = localStorage.getItem('pending_order_ref');
+      const pendingOrderId = localStorage.getItem('pending_order_id');
+      
+      console.log('Stored order details:', { pendingOrderRef, pendingOrderId });
 
-    // Simulate payment verification (you should call your backend to verify)
-    setTimeout(() => {
-      if (statusParam === 'successful' || statusParam === 'completed') {
-        setStatus('success');
-        setMessage('Your payment was successful! Your order has been confirmed.');
-        clearCart();
-        toast.success('Payment successful!');
-        
-        // Clear any pending order reference
-        localStorage.removeItem('pending_order_ref');
-      } else if (statusParam === 'cancelled') {
-        setStatus('failed');
-        setMessage('Payment was cancelled. You can try again.');
-        toast.error('Payment cancelled');
-      } else {
-        setStatus('failed');
-        setMessage('Payment failed. Please try again or contact support.');
-        toast.error('Payment failed');
-      }
-    }, 2000);
+      // Simulate payment verification (in production, verify with your backend)
+      setTimeout(() => {
+        if (statusParam === 'successful' || statusParam === 'completed') {
+          setStatus('success');
+          setMessage('Payment successful! Your order has been confirmed and is being processed.');
+          setOrderDetails({
+            transactionId: transactionId || flwRef,
+            orderRef: txRef || pendingOrderRef,
+            orderId: pendingOrderId
+          });
+          
+          // Clear cart and stored order data
+          clearCart();
+          localStorage.removeItem('pending_order_ref');
+          localStorage.removeItem('pending_order_id');
+          
+          toast.success('Payment completed successfully!');
+          
+        } else if (statusParam === 'cancelled') {
+          setStatus('failed');
+          setMessage('Payment was cancelled. You can try again by returning to checkout.');
+          toast.error('Payment was cancelled');
+          
+        } else {
+          setStatus('failed');
+          setMessage('Payment failed or was not completed. Please try again or contact support if you were charged.');
+          toast.error('Payment failed');
+        }
+      }, 2000); // 2 second delay to simulate verification
+    };
+
+    handlePaymentCallback();
   }, [searchParams, clearCart]);
 
   const handleContinueShopping = () => {
@@ -51,14 +78,20 @@ const PaymentCallback = () => {
     navigate('/checkout');
   };
 
+  const handleViewOrders = () => {
+    navigate('/dashboard');
+  };
+
   if (status === 'loading') {
     return (
       <div className="container mx-auto px-4 py-16">
         <Card className="max-w-md mx-auto">
           <CardContent className="text-center py-8">
             <Loader className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
-            <h2 className="text-xl font-semibold mb-2">Processing Payment</h2>
-            <p className="text-muted-foreground">Please wait while we verify your payment...</p>
+            <h2 className="text-xl font-semibold mb-2">Verifying Payment</h2>
+            <p className="text-muted-foreground">
+              Please wait while we confirm your payment with the payment gateway...
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -81,20 +114,35 @@ const PaymentCallback = () => {
         <CardContent className="text-center space-y-4">
           <p className="text-muted-foreground">{message}</p>
           
+          {status === 'success' && orderDetails && (
+            <div className="bg-green-50 p-4 rounded-lg text-left">
+              <h4 className="font-semibold text-green-800 mb-2">Order Details:</h4>
+              {orderDetails.orderId && (
+                <p className="text-sm text-green-700">Order ID: {orderDetails.orderId}</p>
+              )}
+              {orderDetails.transactionId && (
+                <p className="text-sm text-green-700">Transaction ID: {orderDetails.transactionId}</p>
+              )}
+              {orderDetails.orderRef && (
+                <p className="text-sm text-green-700">Reference: {orderDetails.orderRef}</p>
+              )}
+            </div>
+          )}
+          
           <div className="space-y-2">
             {status === 'success' ? (
               <>
-                <Button onClick={handleContinueShopping} className="w-full">
-                  Continue Shopping
+                <Button onClick={handleViewOrders} className="w-full">
+                  View My Orders
                 </Button>
-                <Button variant="outline" asChild className="w-full">
-                  <Link to="/dashboard">View Orders</Link>
+                <Button variant="outline" onClick={handleContinueShopping} className="w-full">
+                  Continue Shopping
                 </Button>
               </>
             ) : (
               <>
                 <Button onClick={handleTryAgain} className="w-full">
-                  Try Again
+                  Try Payment Again
                 </Button>
                 <Button variant="outline" onClick={handleContinueShopping} className="w-full">
                   Continue Shopping
