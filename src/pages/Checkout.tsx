@@ -21,7 +21,7 @@ interface CheckoutFormData {
 
 const Checkout = () => {
   const { cart, clearCart } = useCart();
-  const { token, user } = useAuth();
+  const { token, userId, email } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -29,7 +29,7 @@ const Checkout = () => {
     console.log('Starting checkout process with form data:', formData);
     
     // Validate authentication
-    if (!token || !user) {
+    if (!token || !userId || !email) {
       console.log('User not authenticated, redirecting to login');
       toast.error("Please log in to complete your order");
       navigate(`/login?redirect=/checkout`);
