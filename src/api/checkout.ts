@@ -1,5 +1,6 @@
 
 import apiClient from './client';
+import { CartItem } from '@/types';
 
 export interface CheckoutData {
   shipping_address: string;
@@ -8,6 +9,11 @@ export interface CheckoutData {
   shipping_country: string;
   shipping_zip_code: string;
   payment_method: string;
+  cart_items: Array<{
+    product_id: string;
+    quantity: number;
+    price: number;
+  }>;
 }
 
 export interface CheckoutResponse {

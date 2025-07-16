@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -10,13 +9,22 @@ import { toast } from 'sonner';
 import CheckoutForm from '@/components/CheckoutForm';
 import OrderSummary from '@/components/OrderSummary';
 
+interface CheckoutFormData {
+  shipping_address: string;
+  shipping_city: string;
+  shipping_state: string;
+  shipping_country: string;
+  shipping_zip_code: string;
+  payment_method: string;
+}
+
 const Checkout = () => {
-  const { cart } = useCart();
+  const { cart, clearCart } = useCart();
   const { token } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleCheckout = async (formData: CheckoutData) => {
+  const handleCheckout = async (formData: CheckoutFormData) => {
     if (!token) {
       toast.error("You need to log in to place an order");
       navigate(`/login?redirect=/checkout`);
@@ -33,7 +41,19 @@ const Checkout = () => {
     try {
       console.log('Starting checkout process...');
       
-      const response = await createCheckout(formData);
+      // Prepare cart items for the backend
+      const cartItems = cart.items.map(item => ({
+        product_id: item.product.id,
+        quantity: item.quantity,
+        price: item.product.price
+      }));
+
+      const checkoutData: CheckoutData = {
+        ...formData,
+        cart_items: cartItems
+      };
+      
+      const response = await createCheckout(checkoutData);
       
       console.log('Checkout successful, redirecting to:', response.payment_url);
       
@@ -41,6 +61,9 @@ const Checkout = () => {
       if (response.reference) {
         localStorage.setItem('pending_order_ref', response.reference);
       }
+      
+      // Clear cart on successful checkout initiation
+      clearCart();
       
       // Redirect to Flutterwave payment page
       window.location.href = response.payment_url;
