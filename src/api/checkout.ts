@@ -1,6 +1,5 @@
 
 import apiClient from './client';
-import { CartItem } from '@/types';
 
 export interface CheckoutData {
   shipping_address: string;
