@@ -1,42 +1,48 @@
-
+// src/api/apiClient.ts
 import axios from 'axios';
+
+const PUBLIC_ENDPOINTS = ['/auth/login/', '/auth/register/', '/products', '/home', '/categories', '/contact'];
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'https://makelacosmetic.uk/api',
-//   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Token ${token}`;
+    // Get token from either storage location
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+
+    try {
+      const fullUrl = new URL(config.url || '', config.baseURL);
+      const path = fullUrl.pathname.replace(/^\/api/, '');
+
+      const isPublic = PUBLIC_ENDPOINTS.some(endpoint => 
+        path === endpoint || path.startsWith(endpoint)
+      );
+
+      if (token && !isPublic) {
+        // Use 'Bearer' for JWT authentication
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (e) {
+      console.warn("Could not parse request URL for auth check:", e);
     }
-    console.log(`API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+
     return config;
   },
-  (error) => {
-    console.error('API Request Error:', error);
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor
 apiClient.interceptors.response.use(
-  (response) => {
-    console.log(`API Response: ${response.status} ${response.config.url}`);
-    return response;
-  },
+  (response) => response,
   (error) => {
-    console.error('API Response Error:', error.response?.status, error.response?.data || error.message);
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      console.warn('Unauthorized: Invalid or missing token.');
+      // Add logout logic if needed
     }
     return Promise.reject(error);
   }

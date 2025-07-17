@@ -1,166 +1,133 @@
-
-import React, { createContext, useContext, useState, useEffect } from "react";
+// src/contexts/AuthContext.tsx
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 interface AuthContextType {
   token: string | null;
+  refresh: string | null;
   userId: number | null;
   email: string | null;
   isAuthenticated: boolean;
-  login: (token: string, userId: number, email: string, remember: boolean) => void;
+  isInitialized: boolean;
+  login: (token: string, userId: number, email: string, remember: boolean, refresh?: string) => void;
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [token, setToken] = useState<string | null>(null);
-  const [userId, setUserId] = useState<number | null>(null);
-  const [email, setEmail] = useState<string | null>(null);
+// Utility to retrieve from localStorage or sessionStorage
+function getStored(key: string): string | null {
+  return localStorage.getItem(key) || sessionStorage.getItem(key);
+}
+
+// AuthProvider component
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [token, setToken] = useState<string | null>(() => getStored("token"));
+  const [refresh, setRefresh] = useState<string | null>(() => getStored("refresh"));
+  const [userId, setUserId] = useState<number | null>(() => {
+    const stored = getStored("userId");
+    return stored ? parseInt(stored, 10) : null;
+  });
+  const [email, setEmail] = useState<string | null>(() => getStored("email"));
   const [isInitialized, setIsInitialized] = useState(false);
 
-  useEffect(() => {
-    const restoreAuthState = () => {
-      try {
-        console.log('🔄 Starting auth state restoration...');
-        
-        // Check localStorage first, then sessionStorage
-        let savedToken = localStorage.getItem("token");
-        let savedUserId = localStorage.getItem("userId");
-        let savedEmail = localStorage.getItem("email");
-        let storageType = 'localStorage';
+  // Login function
+  const login = (
+    newToken: string, 
+    newUserId: number, 
+    newEmail: string, 
+    remember = true, 
+    newRefresh = ""
+  ) => {
+    const storage = remember ? localStorage : sessionStorage;
 
-        // If not in localStorage, check sessionStorage
-        if (!savedToken) {
-          savedToken = sessionStorage.getItem("token");
-          savedUserId = sessionStorage.getItem("userId");
-          savedEmail = sessionStorage.getItem("email");
-          storageType = 'sessionStorage';
-        }
+    // Clear both storages to avoid duplicates
+    localStorage.removeItem("token");
+    localStorage.removeItem("refresh");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("email");
+    
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("refresh");
+    sessionStorage.removeItem("userId");
+    sessionStorage.removeItem("email");
 
-        console.log('📋 Storage check results:', {
-          storageType,
-          hasToken: !!savedToken,
-          hasUserId: !!savedUserId,
-          hasEmail: !!savedEmail,
-          tokenPreview: savedToken ? `${savedToken.substring(0, 10)}...` : 'none'
-        });
+    // Store auth data
+    storage.setItem("token", newToken);
+    storage.setItem("refresh", newRefresh);
+    storage.setItem("userId", String(newUserId));
+    storage.setItem("email", newEmail);
 
-        // Only set auth state if we have ALL required data
-        if (savedToken && savedUserId && savedEmail) {
-          console.log('✅ Restoring complete auth state from', storageType);
-          setToken(savedToken);
-          setUserId(Number(savedUserId));
-          setEmail(savedEmail);
-        } else {
-          console.log('❌ Incomplete auth data found - NOT clearing existing state');
-          // DO NOT clear existing state here - this was causing the logout issue
-        }
-      } catch (error) {
-        console.error('💥 Error restoring auth state:', error);
-        // DO NOT clear state on error - preserve existing auth state
-      } finally {
-        setIsInitialized(true);
-        console.log('🏁 Auth initialization complete');
-      }
-    };
-
-    // Only restore on initial load, not on every effect run
-    if (!isInitialized) {
-      restoreAuthState();
-    }
-  }, []); // Empty dependency array to run only once
-
-  const login = (newToken: string, newUserId: number, newEmail: string, remember: boolean) => {
-    try {
-      const storage = remember ? localStorage : sessionStorage;
-      console.log('🔐 Logging in user:', { 
-        userId: newUserId, 
-        email: newEmail, 
-        remember,
-        storageType: remember ? 'localStorage' : 'sessionStorage'
-      });
-      
-      // Clear any existing auth data from both storages to avoid conflicts
-      localStorage.removeItem("token");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("email");
-      sessionStorage.removeItem("token");
-      sessionStorage.removeItem("userId");
-      sessionStorage.removeItem("email");
-      
-      // Set new auth data in the chosen storage
-      storage.setItem("token", newToken);
-      storage.setItem("userId", String(newUserId));
-      storage.setItem("email", newEmail);
-
-      // Update state immediately
-      setToken(newToken);
-      setUserId(newUserId);
-      setEmail(newEmail);
-      
-      console.log('✅ Login successful - auth state updated');
-    } catch (error) {
-      console.error('💥 Error during login:', error);
-    }
+    // Update state
+    setToken(newToken);
+    setRefresh(newRefresh);
+    setUserId(newUserId);
+    setEmail(newEmail);
   };
 
+  // Logout function
   const logout = () => {
+    // Clear storage
+    localStorage.removeItem("token");
+    localStorage.removeItem("refresh");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("email");
+    
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("refresh");
+    sessionStorage.removeItem("userId");
+    sessionStorage.removeItem("email");
+
+    // Clear state
+    setToken(null);
+    setRefresh(null);
+    setUserId(null);
+    setEmail(null);
+  };
+
+  // On mount, rehydrate from storage
+  useEffect(() => {
     try {
-      console.log('🚪 Manually logging out user');
-      
-      // Clear all auth data from both storages
-      localStorage.removeItem("token");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("email");
-      sessionStorage.removeItem("token");
-      sessionStorage.removeItem("userId");
-      sessionStorage.removeItem("email");
-      
-      // Clear state
-      setToken(null);
-      setUserId(null);
-      setEmail(null);
-      
-      console.log('✅ Logout complete');
+      const storedToken = getStored("token");
+      const storedRefresh = getStored("refresh");
+      const storedUserId = getStored("userId");
+      const storedEmail = getStored("email");
+
+      if (storedToken && storedUserId && storedEmail) {
+        setToken(storedToken);
+        setRefresh(storedRefresh);
+        setUserId(parseInt(storedUserId, 10));
+        setEmail(storedEmail);
+      }
     } catch (error) {
-      console.error('💥 Error during logout:', error);
+      console.error("Error restoring session:", error);
+    } finally {
+      setIsInitialized(true);
     }
-  };
-
-  // Prevent rendering children until auth is fully initialized
-  if (!isInitialized) {
-    console.log('⏳ Auth still initializing...');
-    return <div>Loading...</div>;
-  }
-
-  const contextValue = {
-    token,
-    userId,
-    email,
-    isAuthenticated: !!token && !!userId && !!email,
-    login,
-    logout,
-  };
-
-  console.log('🎯 Current auth state:', {
-    isAuthenticated: contextValue.isAuthenticated,
-    hasToken: !!token,
-    hasUserId: !!userId,
-    hasEmail: !!email,
-    timestamp: new Date().toISOString()
-  });
+  }, []);
 
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider
+      value={{
+        token,
+        refresh,
+        userId,
+        email,
+        isAuthenticated: !!token,
+        isInitialized,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => {
+// Custom hook for accessing auth
+export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-};
+}

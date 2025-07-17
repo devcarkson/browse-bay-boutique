@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner'; // ✅ Make sure you use `sonner` toast
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -58,14 +58,9 @@ const Signup = () => {
         phone: formData.phone,
       };
 
-      await axios.post('http://127.0.0.1:8000/api/auth/register/', payload);
+      await axios.post('https://makelacosmetic.uk/api/auth/register/', payload);
 
-      toast({
-        title: '🎉 Account created!',
-        description: 'You can now log in with your credentials.',
-        variant: 'default',
-      });
-
+      toast.success('🎉 Account created! You can now log in.');
       setTimeout(() => {
         setLoading(false);
         navigate('/login');
@@ -74,11 +69,7 @@ const Signup = () => {
       if (error.response?.status === 400) {
         setErrors(error.response.data);
       } else {
-        toast({
-          title: 'Something went wrong!',
-          description: 'Please try again later.',
-          variant: 'destructive',
-        });
+        toast.error('Something went wrong. Please try again later.');
       }
       setLoading(false);
     }
@@ -96,6 +87,7 @@ const Signup = () => {
           </CardHeader>
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Username */}
               <div>
                 <Label htmlFor="username" className="text-pink-700 font-semibold">Username</Label>
                 <Input
@@ -105,12 +97,12 @@ const Signup = () => {
                   placeholder="Enter your username"
                   value={formData.username}
                   onChange={handleInputChange}
-                  className="border-pink-200 focus:border-pink-400"
                   required
                 />
                 {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username[0]}</p>}
               </div>
 
+              {/* Email */}
               <div>
                 <Label htmlFor="email" className="text-pink-700 font-semibold">Email</Label>
                 <Input
@@ -120,12 +112,12 @@ const Signup = () => {
                   placeholder="Enter your email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="border-pink-200 focus:border-pink-400"
                   required
                 />
                 {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email[0]}</p>}
               </div>
 
+              {/* Phone */}
               <div>
                 <Label htmlFor="phone" className="text-pink-700 font-semibold">Phone Number</Label>
                 <Input
@@ -135,12 +127,12 @@ const Signup = () => {
                   placeholder="Enter your phone number"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="border-pink-200 focus:border-pink-400"
                   required
                 />
                 {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone[0]}</p>}
               </div>
 
+              {/* Password */}
               <div>
                 <Label htmlFor="password" className="text-pink-700 font-semibold">Password</Label>
                 <div className="relative">
@@ -151,7 +143,6 @@ const Signup = () => {
                     placeholder="Create a password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="border-pink-200 focus:border-pink-400"
                     required
                   />
                   <Button
@@ -167,6 +158,7 @@ const Signup = () => {
                 {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password[0]}</p>}
               </div>
 
+              {/* Confirm Password */}
               <div>
                 <Label htmlFor="confirmPassword" className="text-pink-700 font-semibold">Confirm Password</Label>
                 <div className="relative">
@@ -177,7 +169,6 @@ const Signup = () => {
                     placeholder="Confirm your password"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
-                    className="border-pink-200 focus:border-pink-400"
                     required
                   />
                   <Button
@@ -193,6 +184,7 @@ const Signup = () => {
                 {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword[0]}</p>}
               </div>
 
+              {/* Terms Checkbox */}
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="acceptTerms"
@@ -214,6 +206,7 @@ const Signup = () => {
               </div>
               {errors.acceptTerms && <p className="text-red-500 text-sm mt-1">{errors.acceptTerms[0]}</p>}
 
+              {/* Submit */}
               <Button
                 type="submit"
                 disabled={loading}

@@ -1,7 +1,8 @@
+// src/pages/Login.tsx
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
-import axios from 'axios';
+import apiClient from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,15 +35,21 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    try {
-      const res = await axios.post('http://127.0.0.1:8000/api/auth/login/', formData);
-      const { token, user_id, email } = res.data;
 
-      login(token, user_id, email, rememberMe);
+    try {
+      const response = await apiClient.post('/auth/login/', formData);
+      
+      // Match backend response structure
+      const { token, user_id, email, refresh } = response.data;
+
+      login(token, user_id, email, rememberMe, refresh);
       toast.success('Login successful');
       navigate(redirectPath);
     } catch (err: any) {
-      toast.error('Login failed: Invalid credentials');
+      const message = err.response?.data?.detail || 
+                     err.response?.data?.message || 
+                     'Invalid email or password';
+      toast.error(`Login failed: ${message}`);
     } finally {
       setLoading(false);
     }
@@ -110,10 +117,7 @@ const Login = () => {
                   />
                   <label htmlFor="remember" className="text-sm text-pink-700">Remember Me</label>
                 </div>
-                <Link
-                  to="/forgot-password"
-                  className="text-sm text-primary hover:underline font-semibold"
-                >
+                <Link to="/forgot-password" className="text-sm text-primary hover:underline font-semibold">
                   Forgot password?
                 </Link>
               </div>
