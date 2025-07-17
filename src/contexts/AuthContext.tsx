@@ -52,22 +52,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUserId(Number(savedUserId));
           setEmail(savedEmail);
         } else {
-          console.log('❌ Incomplete auth data found:', {
-            token: savedToken ? '✓' : '✗',
-            userId: savedUserId ? '✓' : '✗',
-            email: savedEmail ? '✓' : '✗'
-          });
+          console.log('❌ Incomplete auth data found - NOT clearing existing state');
+          // DO NOT clear existing state here - this was causing the logout issue
         }
       } catch (error) {
         console.error('💥 Error restoring auth state:', error);
+        // DO NOT clear state on error - preserve existing auth state
       } finally {
         setIsInitialized(true);
         console.log('🏁 Auth initialization complete');
       }
     };
 
-    restoreAuthState();
-  }, []);
+    // Only restore on initial load, not on every effect run
+    if (!isInitialized) {
+      restoreAuthState();
+    }
+  }, []); // Empty dependency array to run only once
 
   const login = (newToken: string, newUserId: number, newEmail: string, remember: boolean) => {
     try {
@@ -126,20 +127,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Log auth state changes for debugging - but prevent infinite loops
-  useEffect(() => {
-    if (isInitialized) {
-      console.log('🔄 Auth state update:', {
-        isAuthenticated: !!token,
-        hasToken: !!token,
-        hasUserId: !!userId,
-        hasEmail: !!email,
-        userId,
-        timestamp: new Date().toISOString()
-      });
-    }
-  }, [token, userId, email, isInitialized]);
-
   // Prevent rendering children until auth is fully initialized
   if (!isInitialized) {
     console.log('⏳ Auth still initializing...');
@@ -155,11 +142,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     logout,
   };
 
-  console.log('🎯 Providing auth context:', {
+  console.log('🎯 Current auth state:', {
     isAuthenticated: contextValue.isAuthenticated,
     hasToken: !!token,
     hasUserId: !!userId,
-    hasEmail: !!email
+    hasEmail: !!email,
+    timestamp: new Date().toISOString()
   });
 
   return (
