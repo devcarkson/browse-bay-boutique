@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const restoreAuthState = () => {
       try {
-        console.log('Starting auth state restoration...');
+        console.log('🔄 Starting auth state restoration...');
         
         // Check localStorage first, then sessionStorage
         let savedToken = localStorage.getItem("token");
@@ -37,34 +37,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           storageType = 'sessionStorage';
         }
 
-        console.log('Storage check results:', {
+        console.log('📋 Storage check results:', {
           storageType,
           hasToken: !!savedToken,
           hasUserId: !!savedUserId,
           hasEmail: !!savedEmail,
-          tokenLength: savedToken?.length || 0
+          tokenPreview: savedToken ? `${savedToken.substring(0, 10)}...` : 'none'
         });
 
         // Only set auth state if we have ALL required data
         if (savedToken && savedUserId && savedEmail) {
-          console.log('Restoring auth state from', storageType);
+          console.log('✅ Restoring complete auth state from', storageType);
           setToken(savedToken);
           setUserId(Number(savedUserId));
           setEmail(savedEmail);
         } else {
-          console.log('No complete auth state found - missing data:', {
-            token: !savedToken ? 'missing' : 'present',
-            userId: !savedUserId ? 'missing' : 'present',
-            email: !savedEmail ? 'missing' : 'present'
+          console.log('❌ Incomplete auth data found:', {
+            token: savedToken ? '✓' : '✗',
+            userId: savedUserId ? '✓' : '✗',
+            email: savedEmail ? '✓' : '✗'
           });
-          // Don't clear anything here - just leave state as null
         }
       } catch (error) {
-        console.error('Error restoring auth state:', error);
-        // Don't clear state on error - just log it
+        console.error('💥 Error restoring auth state:', error);
       } finally {
         setIsInitialized(true);
-        console.log('Auth initialization complete');
+        console.log('🏁 Auth initialization complete');
       }
     };
 
@@ -74,7 +72,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = (newToken: string, newUserId: number, newEmail: string, remember: boolean) => {
     try {
       const storage = remember ? localStorage : sessionStorage;
-      console.log('Logging in user:', { 
+      console.log('🔐 Logging in user:', { 
         userId: newUserId, 
         email: newEmail, 
         remember,
@@ -94,20 +92,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       storage.setItem("userId", String(newUserId));
       storage.setItem("email", newEmail);
 
-      // Update state
+      // Update state immediately
       setToken(newToken);
       setUserId(newUserId);
       setEmail(newEmail);
       
-      console.log('Login successful - auth state updated');
+      console.log('✅ Login successful - auth state updated');
     } catch (error) {
-      console.error('Error during login:', error);
+      console.error('💥 Error during login:', error);
     }
   };
 
   const logout = () => {
     try {
-      console.log('Manually logging out user');
+      console.log('🚪 Manually logging out user');
       
       // Clear all auth data from both storages
       localStorage.removeItem("token");
@@ -122,44 +120,59 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUserId(null);
       setEmail(null);
       
-      console.log('Logout complete');
+      console.log('✅ Logout complete');
     } catch (error) {
-      console.error('Error during logout:', error);
+      console.error('💥 Error during logout:', error);
     }
   };
 
-  // Log auth state changes for debugging
+  // Log auth state changes for debugging - but prevent infinite loops
   useEffect(() => {
     if (isInitialized) {
-      console.log('Auth state changed:', {
+      console.log('🔄 Auth state update:', {
         isAuthenticated: !!token,
         hasToken: !!token,
         hasUserId: !!userId,
         hasEmail: !!email,
-        userId
+        userId,
+        timestamp: new Date().toISOString()
       });
     }
   }, [token, userId, email, isInitialized]);
 
-  // Don't render children until auth state is initialized
+  // Prevent rendering children until auth is fully initialized
   if (!isInitialized) {
+    console.log('⏳ Auth still initializing...');
     return <div>Loading...</div>;
   }
 
+  const contextValue = {
+    token,
+    userId,
+    email,
+    isAuthenticated: !!token && !!userId && !!email,
+    login,
+    logout,
+  };
+
+  console.log('🎯 Providing auth context:', {
+    isAuthenticated: contextValue.isAuthenticated,
+    hasToken: !!token,
+    hasUserId: !!userId,
+    hasEmail: !!email
+  });
+
   return (
-    <AuthContext.Provider
-      value={{
-        token,
-        userId,
-        email,
-        isAuthenticated: !!token,
-        login,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
