@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,17 +20,34 @@ interface CheckoutFormData {
 }
 
 const Checkout = () => {
-  const { cart, clearCart } = useCart();
-  const { token, userId, email } = useAuth();
+  const { cart } = useCart();
+  const { token, userId, email, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check authentication on component mount
+  useEffect(() => {
+    console.log('Checkout - Auth state:', { 
+      isAuthenticated, 
+      hasToken: !!token, 
+      hasUserId: !!userId, 
+      hasEmail: !!email 
+    });
+    
+    if (!isAuthenticated || !token || !userId || !email) {
+      console.log('User not authenticated, redirecting to login');
+      toast.error("Please log in to complete your order");
+      navigate(`/login?redirect=/checkout`);
+      return;
+    }
+  }, [isAuthenticated, token, userId, email, navigate]);
 
   const handleCheckout = async (formData: CheckoutFormData) => {
     console.log('Starting checkout process with form data:', formData);
     
-    // Validate authentication
-    if (!token || !userId || !email) {
-      console.log('User not authenticated, redirecting to login');
+    // Double-check authentication before proceeding
+    if (!isAuthenticated || !token || !userId || !email) {
+      console.log('Authentication check failed during checkout');
       toast.error("Please log in to complete your order");
       navigate(`/login?redirect=/checkout`);
       return;
@@ -87,6 +104,10 @@ const Checkout = () => {
       if (response.reference) {
         localStorage.setItem('pending_order_ref', response.reference);
         localStorage.setItem('pending_order_id', response.order_id);
+        console.log('Stored order details:', { 
+          reference: response.reference, 
+          orderId: response.order_id 
+        });
       }
       
       console.log('Redirecting to payment URL:', response.payment_url);
@@ -96,7 +117,7 @@ const Checkout = () => {
       
       // Small delay to show the toast
       setTimeout(() => {
-        // Redirect to Flutterwave payment page
+        // Redirect to payment page
         window.location.href = response.payment_url;
       }, 1000);
       
@@ -119,6 +140,17 @@ const Checkout = () => {
       setIsLoading(false);
     }
   };
+
+  // Show loading while checking authentication
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-4">Checking authentication...</h1>
+        </div>
+      </div>
+    );
+  }
 
   // Show empty cart message
   if (!cart || !cart.items || cart.items.length === 0) {

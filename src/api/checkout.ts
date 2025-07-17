@@ -39,7 +39,10 @@ export const createCheckout = async (data: CheckoutData): Promise<CheckoutRespon
       }
     }
     
-    const response = await apiClient.post('/orders/checkout/', data);
+    // Add longer timeout for checkout requests
+    const response = await apiClient.post('/orders/checkout/', data, {
+      timeout: 30000, // 30 seconds timeout
+    });
     
     console.log('Checkout API response:', response.data);
     
@@ -69,6 +72,23 @@ export const createCheckout = async (data: CheckoutData): Promise<CheckoutRespon
     console.error('Checkout API error:', error);
     console.error('Error response:', error.response);
     
+    // Handle network errors first
+    if (!error.response) {
+      if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        throw new Error('Request timeout. The server is taking too long to respond. Please try again.');
+      }
+      
+      if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
+        throw new Error('Network connection error. Please check your internet connection and try again.');
+      }
+      
+      if (error.message.includes('CORS')) {
+        throw new Error('Server configuration error. Please contact support.');
+      }
+      
+      throw new Error('Unable to connect to payment server. Please try again later.');
+    }
+    
     if (error.response?.data) {
       const errorData = error.response.data;
       
@@ -96,15 +116,6 @@ export const createCheckout = async (data: CheckoutData): Promise<CheckoutRespon
       if (typeof errorData === 'string') {
         throw new Error(errorData);
       }
-    }
-    
-    // Handle network errors
-    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-      throw new Error('Request timeout. Please check your connection and try again.');
-    }
-    
-    if (error.code === 'ERR_NETWORK') {
-      throw new Error('Network error. Please check your connection.');
     }
     
     throw new Error(error.message || 'An unexpected error occurred');
