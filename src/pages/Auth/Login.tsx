@@ -1,4 +1,3 @@
-// src/pages/Login.tsx
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
@@ -37,19 +36,28 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await apiClient.post('/auth/login/', formData);
-      
-      // Match backend response structure
-      const { token, user_id, email, refresh } = response.data;
+      const form = new URLSearchParams();
+      form.append('email', formData.email);
+      form.append('password', formData.password);
 
+      const response = await apiClient.post('/auth/login/', form, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      });
+
+      const { token, user_id, email, refresh } = response.data;
       login(token, user_id, email, rememberMe, refresh);
       toast.success('Login successful');
       navigate(redirectPath);
     } catch (err: any) {
-      const message = err.response?.data?.detail || 
-                     err.response?.data?.message || 
-                     'Invalid email or password';
-      toast.error(`Login failed: ${message}`);
+      let message = 'Login failed';
+      if (err.response?.data?.detail) {
+        message = err.response.data.detail;
+      } else if (err.response?.data?.non_field_errors) {
+        message = err.response.data.non_field_errors[0];
+      }
+      toast.error(message);
     } finally {
       setLoading(false);
     }

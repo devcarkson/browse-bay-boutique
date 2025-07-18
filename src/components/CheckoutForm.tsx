@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +19,7 @@ interface CheckoutFormData {
 interface CheckoutFormProps {
   onSubmit: (data: CheckoutFormData) => void;
   isLoading: boolean;
+  defaultValues?: Partial<CheckoutFormData>;
 }
 
 const nigerianStates = [
@@ -30,7 +30,11 @@ const nigerianStates = [
   'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara'
 ];
 
-const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit, isLoading }) => {
+const CheckoutForm: React.FC<CheckoutFormProps> = ({ 
+  onSubmit, 
+  isLoading,
+  defaultValues 
+}) => {
   const { 
     register, 
     handleSubmit, 
@@ -41,33 +45,33 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit, isLoading }) => {
     defaultValues: {
       payment_method: 'flutterwave',
       shipping_country: 'Nigeria',
-      shipping_state: ''
+      ...defaultValues // Spread any additional default values passed as props
     }
   });
 
   const watchedState = watch('shipping_state');
   const watchedCountry = watch('shipping_country');
+  const watchedPaymentMethod = watch('payment_method');
 
   const handleStateChange = (value: string) => {
-    setValue('shipping_state', value);
+    setValue('shipping_state', value, { shouldValidate: true });
   };
 
   const handleCountryChange = (value: string) => {
-    setValue('shipping_country', value);
-    // Reset state when country changes
+    setValue('shipping_country', value, { shouldValidate: true });
     if (value !== 'Nigeria') {
       setValue('shipping_state', '');
     }
   };
 
+  const handlePaymentMethodChange = (value: string) => {
+    setValue('payment_method', value, { shouldValidate: true });
+  };
+
   const handleFormSubmit = (data: CheckoutFormData) => {
-    console.log('Form submitted with data:', data);
-    
-    // Validate required fields
     if (!data.shipping_state) {
       return;
     }
-    
     onSubmit(data);
   };
 
@@ -80,6 +84,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit, isLoading }) => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+          {/* Address Field */}
           <div>
             <Label htmlFor="shipping_address">Street Address *</Label>
             <Input
@@ -96,6 +101,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit, isLoading }) => {
             )}
           </div>
 
+          {/* City and ZIP Code */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="shipping_city">City *</Label>
@@ -132,10 +138,15 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit, isLoading }) => {
             </div>
           </div>
 
+          {/* Country and State */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="shipping_country">Country *</Label>
-              <Select value={watchedCountry} onValueChange={handleCountryChange} disabled={isLoading}>
+              <Select 
+                value={watchedCountry} 
+                onValueChange={handleCountryChange} 
+                disabled={isLoading}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select Country" />
                 </SelectTrigger>
@@ -152,10 +163,10 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit, isLoading }) => {
               <Select 
                 value={watchedState} 
                 onValueChange={handleStateChange} 
-                disabled={isLoading}
+                disabled={isLoading || !watchedCountry}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select State" />
+                  <SelectValue placeholder={watchedCountry ? "Select State" : "Select Country First"} />
                 </SelectTrigger>
                 <SelectContent>
                   {watchedCountry === 'Nigeria' ? (
@@ -175,25 +186,69 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onSubmit, isLoading }) => {
             </div>
           </div>
 
+          {/* Payment Method */}
           <div className="pt-4">
-            <Label>Payment Method</Label>
-            <div className="mt-2 p-3 border rounded-lg bg-muted/50">
-              <div className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  id="flutterwave"
-                  value="flutterwave"
-                  {...register('payment_method')}
-                  checked
-                  readOnly
-                />
-                <label htmlFor="flutterwave" className="font-medium">
-                  Pay with Flutterwave
-                </label>
+            <Label>Payment Method *</Label>
+            <div className="mt-2 space-y-2">
+              <div 
+                className={`p-3 border rounded-lg cursor-pointer ${
+                  watchedPaymentMethod === 'flutterwave' ? 'bg-primary/10 border-primary' : 'bg-muted/50'
+                }`}
+                onClick={() => handlePaymentMethodChange('flutterwave')}
+              >
+                <div className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    id="flutterwave"
+                    value="flutterwave"
+                    {...register('payment_method')}
+                    checked={watchedPaymentMethod === 'flutterwave'}
+                    className="hidden"
+                  />
+                  <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${
+                    watchedPaymentMethod === 'flutterwave' ? 'border-primary bg-primary' : 'border-muted-foreground'
+                  }`}>
+                    {watchedPaymentMethod === 'flutterwave' && (
+                      <div className="h-2 w-2 rounded-full bg-white"></div>
+                    )}
+                  </div>
+                  <label htmlFor="flutterwave" className="font-medium cursor-pointer">
+                    Pay with Flutterwave
+                  </label>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1 ml-6">
+                  Secure payment via Flutterwave (Cards, Bank Transfer, USSD)
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                Secure payment via Flutterwave (Cards, Bank Transfer, USSD)
-              </p>
+
+              {/* Add other payment methods if needed */}
+              {/* <div 
+                className={`p-3 border rounded-lg cursor-pointer mt-2 ${
+                  watchedPaymentMethod === 'paystack' ? 'bg-primary/10 border-primary' : 'bg-muted/50'
+                }`}
+                onClick={() => handlePaymentMethodChange('paystack')}
+              >
+                <div className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    id="paystack"
+                    value="paystack"
+                    {...register('payment_method')}
+                    checked={watchedPaymentMethod === 'paystack'}
+                    className="hidden"
+                  />
+                  <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${
+                    watchedPaymentMethod === 'paystack' ? 'border-primary bg-primary' : 'border-muted-foreground'
+                  }`}>
+                    {watchedPaymentMethod === 'paystack' && (
+                      <div className="h-2 w-2 rounded-full bg-white"></div>
+                    )}
+                  </div>
+                  <label htmlFor="paystack" className="font-medium cursor-pointer">
+                    Pay with Paystack
+                  </label>
+                </div>
+              </div> */}
             </div>
           </div>
 
