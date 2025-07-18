@@ -1,3 +1,4 @@
+
 // src/App.tsx
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
@@ -26,7 +27,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-background flex flex-col overflow-x-hidden w-full">
       <Header />
-      <main className="flex-1 w-full overflow-x-hidden">
+      <main className="flex-1 w-full overflow-x-hidden pt-16">
         <Routes>
           {/* public */}
           <Route path="/" element={<Home />} />

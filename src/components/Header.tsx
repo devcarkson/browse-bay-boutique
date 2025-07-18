@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   ShoppingCart,
@@ -34,7 +35,7 @@ const Header = () => {
   };
 
   return (
-    <header className="border-b bg-background sticky top-0 z-50">
+    <header className="border-b bg-background fixed top-0 left-0 right-0 z-[100] w-full">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
