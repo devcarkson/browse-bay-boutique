@@ -1,10 +1,11 @@
-// src/api/checkout.ts
-import apiClient from './client';
+import apiClient from "./client";
 
 interface CartItem {
   product_id: string;
   quantity: number;
   price: number;
+  name?: string;
+  image?: string;
 }
 
 export interface CheckoutData {
@@ -22,35 +23,74 @@ export interface CheckoutResponse {
   payment_url: string;
   reference: string;
   order_id: string | number;
+  status?: string;
 }
 
-export const createCheckout = async (data: CheckoutData): Promise<CheckoutResponse> => {
-  // Get token using the same logic as apiClient
-  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-  
-  if (!token) {
-    throw new Error('Please login to complete checkout');
-  }
-
+export const createCheckout = async (
+  data: CheckoutData,
+  token: string
+): Promise<CheckoutResponse> => {
   try {
-    // Manually add Authorization header
-    const response = await apiClient.post('/orders/checkout/', data, {
-      headers: {
-        Authorization: `Bearer ${token}`
+    if (!token) {
+      throw new Error("Authentication token is required");
+    }
+
+    // Validate cart items
+    if (!data.cart_items?.length) {
+      throw new Error("Your cart is empty");
+    }
+
+    // Validate quantities and prices
+    data.cart_items.forEach(item => {
+      if (item.quantity < 1 || item.quantity > 99) {
+        throw new Error("Quantity must be between 1 and 99");
+      }
+      if (item.price <= 0) {
+        throw new Error("Invalid product price");
       }
     });
+
+    // Validate shipping data
+    const requiredFields = [
+      { field: "shipping_address", name: "Shipping address" },
+      { field: "shipping_city", name: "City" },
+      { field: "shipping_state", name: "State/Province" },
+      { field: "shipping_country", name: "Country" },
+      { field: "shipping_zip_code", name: "ZIP/Postal code" }
+    ];
     
-    if (!response.data?.payment_url) {
-      throw new Error('Payment URL missing in response');
+    for (const { field, name } of requiredFields) {
+      const value = data[field as keyof CheckoutData];
+      if (!value?.toString().trim()) {
+        throw new Error(`${name} is required`);
+      }
     }
-    
-    return response.data;
+
+    const response = await apiClient.post("/orders/checkout/", data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      timeout: 30000
+    });
+
+    if (!response.data?.payment_url) {
+      throw new Error("Payment initialization failed");
+    }
+
+    return {
+      payment_url: response.data.payment_url,
+      reference: response.data.reference || "",
+      order_id: response.data.order_id || "",
+      order: response.data.order || null,
+      status: response.data.status || "pending"
+    };
+
   } catch (error: any) {
     if (error.response?.status === 401) {
-      // Clear invalid tokens
-      localStorage.removeItem('token');
-      sessionStorage.removeItem('token');
-      throw new Error('Session expired. Please login again');
+      throw new Error("Your session has expired. Please login again");
+    } else if (error.response?.status === 400) {
+      throw new Error(error.response.data?.detail || "Invalid checkout data");
     }
     throw error;
   }

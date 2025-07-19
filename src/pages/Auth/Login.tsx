@@ -12,7 +12,10 @@ import { toast } from 'sonner';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [formData, setFormData] = useState({ 
+    email: '', 
+    password: '' 
+  });
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
 
@@ -36,18 +39,22 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const form = new URLSearchParams();
-      form.append('email', formData.email);
-      form.append('password', formData.password);
-
-      const response = await apiClient.post('/auth/login/', form, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
+      const response = await apiClient.post('/auth/login/', {
+        email: formData.email,
+        password: formData.password,
+        remember_me: rememberMe
       });
 
-      const { token, user_id, email, refresh } = response.data;
-      login(token, user_id, email, rememberMe, refresh);
+      const { access: token, refresh, user } = response.data;
+      
+      login(
+        token,
+        refresh,
+        user.id,
+        user.email,
+        rememberMe
+      );
+      
       toast.success('Login successful');
       navigate(redirectPath);
     } catch (err: any) {
@@ -56,6 +63,8 @@ const Login = () => {
         message = err.response.data.detail;
       } else if (err.response?.data?.non_field_errors) {
         message = err.response.data.non_field_errors[0];
+      } else if (err.message) {
+        message = err.message;
       }
       toast.error(message);
     } finally {
@@ -86,6 +95,7 @@ const Login = () => {
                   onChange={handleInputChange}
                   className="border-pink-200 focus:border-pink-400"
                   required
+                  autoComplete="username"
                 />
               </div>
 
@@ -101,6 +111,7 @@ const Login = () => {
                     onChange={handleInputChange}
                     className="border-pink-200 focus:border-pink-400"
                     required
+                    autoComplete="current-password"
                   />
                   <Button
                     type="button"

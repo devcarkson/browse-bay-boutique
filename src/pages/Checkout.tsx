@@ -20,23 +20,39 @@ interface CheckoutFormData {
 
 const Checkout = () => {
   const { cart } = useCart();
-  const { isAuthenticated, logout } = useAuth(); // Added logout function
+  const { isAuthenticated, logout, token, refreshToken } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
 
-  // Authentication check
+  // Authentication check with token verification
   useEffect(() => {
-    if (!isAuthenticated) {
-      toast.error('Please log in to complete your order');
-      navigate('/login?redirect=/checkout');
-    } else {
-      setAuthChecked(true);
-    }
-  }, [isAuthenticated, navigate]);
+    const verifyAuth = async () => {
+      if (!isAuthenticated) {
+        toast.error('Please log in to complete your order');
+        navigate('/login?redirect=/checkout');
+        return;
+      }
+
+      try {
+        // Verify token is still valid
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+        
+        setAuthChecked(true);
+      } catch (error) {
+        toast.error('Session verification failed');
+        logout();
+        navigate('/login');
+      }
+    };
+
+    verifyAuth();
+  }, [isAuthenticated, navigate, logout, token]);
 
   const handleCheckout = async (formData: CheckoutFormData) => {
-    if (!authChecked) {
+    if (!authChecked || !token) {
       toast.error('Authentication check in progress');
       return;
     }
@@ -50,19 +66,13 @@ const Checkout = () => {
     setIsLoading(true);
 
     try {
-      // Verify token exists before proceeding
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      if (!token) {
-        throw new Error('Your session has expired. Please login again');
-      }
-
       // Validate required fields
       const requiredFields = {
         shipping_address: 'Shipping Address',
         shipping_city: 'City',
-        shipping_state: 'State',
+        shipping_state: 'State/Province',
         shipping_country: 'Country',
-        shipping_zip_code: 'ZIP Code'
+        shipping_zip_code: 'ZIP/Postal Code'
       };
 
       for (const [field, name] of Object.entries(requiredFields)) {
@@ -71,62 +81,83 @@ const Checkout = () => {
         }
       }
 
-      // Prepare cart items with validation
+      // Prepare validated cart items
       const cartItems = cart.items.map(item => {
         if (!item.product?.id) {
           throw new Error('Invalid product in cart');
         }
         return {
           product_id: item.product.id.toString(),
-          quantity: Math.max(1, Number(item.quantity)),
-          price: Number(item.product.price) || 0
+          quantity: Math.max(1, Math.min(Number(item.quantity), 99)), // Limit quantity to 99
+          price: Number(item.product.price) || 0,
+          name: item.product.name || '',
+          image: item.product.image || ''
         };
       });
 
-      // Call checkout API
-      const response = await createCheckout({
-        ...formData,
-        payment_method: formData.payment_method || 'flutterwave',
-        cart_items: cartItems
-      });
+      // Attempt checkout with token refresh if needed
+      const attemptCheckout = async (attempt = 1): Promise<any> => {
+        try {
+          const response = await createCheckout({
+            ...formData,
+            payment_method: formData.payment_method || 'flutterwave',
+            cart_items: cartItems
+          }, token);
 
-      if (!response.payment_url) {
-        throw new Error('Payment initialization failed');
-      }
+          if (!response.payment_url) {
+            throw new Error('Payment initialization failed');
+          }
 
-      // Store order reference with expiration
-      localStorage.setItem('pending_order', JSON.stringify({
+          return response;
+        } catch (error: any) {
+          if (error.response?.status === 401 && attempt === 1 && refreshToken) {
+            // Try to refresh token and retry
+            try {
+              await refreshToken();
+              return attemptCheckout(2); // Second attempt
+            } catch (refreshError) {
+              throw new Error('Session expired. Please login again');
+            }
+          }
+          throw error;
+        }
+      };
+
+      const response = await attemptCheckout();
+
+      // Store minimal order reference
+      sessionStorage.setItem('pending_order', JSON.stringify({
         reference: response.reference,
         order_id: response.order_id,
-        expires: Date.now() + 3600000 // 1 hour
+        expires: Date.now() + 3600000 // 1 hour expiration
       }));
 
       // Redirect to payment
       toast.success('Redirecting to payment gateway...');
-      setTimeout(() => {
-        window.location.assign(response.payment_url);
-      }, 1000);
+      window.location.assign(response.payment_url);
 
     } catch (error: any) {
       console.error('Checkout Error:', error);
       
-      let errorMessage = 'Checkout failed';
+      let errorMessage = 'Checkout failed. Please try again.';
       
       if (error.response) {
         switch (error.response.status) {
           case 401:
             errorMessage = 'Session expired. Please login again';
-            logout(); // Clear auth state
+            logout();
             navigate('/login');
             break;
-          case 404:
-            errorMessage = 'Checkout service not available';
-            break;
           case 400:
-            errorMessage = error.response.data?.detail || 'Invalid checkout data';
+            errorMessage = error.response.data?.detail || 
+                         error.response.data?.message || 
+                         'Invalid checkout data';
+            break;
+          case 403:
+            errorMessage = 'Payment authorization failed';
             break;
           default:
-            errorMessage = error.response.data?.message || `Server error (${error.response.status})`;
+            errorMessage = `Service error (${error.response.status})`;
         }
       } else if (error.message) {
         errorMessage = error.message;
@@ -180,7 +211,7 @@ const Checkout = () => {
             isLoading={isLoading}
             defaultValues={{
               payment_method: 'flutterwave',
-              shipping_country: 'Nigeria' // Added default country
+              shipping_country: 'Nigeria'
             }}
           />
         </div>
