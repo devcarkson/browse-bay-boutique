@@ -102,11 +102,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       const newToken = response.data.access;
+      // Save new refresh token if provided (for rotation)
+      const newRefresh = response.data.refresh || refresh;
       const remember = localStorage.getItem("refresh") !== null;
-      
-      setAuthStorage(newToken, refresh, userId, email, remember);
+      setAuthStorage(newToken, newRefresh, userId, email, remember);
       setToken(newToken);
-      
+      setRefresh(newRefresh);
       return true;
     } catch (error) {
       console.error("Token refresh failed:", error);
