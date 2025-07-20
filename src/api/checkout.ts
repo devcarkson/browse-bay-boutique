@@ -15,7 +15,7 @@ export interface CheckoutData {
   shipping_country: string;
   shipping_zip_code: string;
   payment_method: string;
-  cart_items: CartItem[];
+  cart_items?: CartItem[];
 }
 
 export interface CheckoutResponse {
@@ -67,10 +67,6 @@ export const createCheckout = async (
     }
 
     const response = await apiClient.post("/orders/checkout/", data, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
       timeout: 30000
     });
 
@@ -88,7 +84,8 @@ export const createCheckout = async (
 
   } catch (error: any) {
     if (error.response?.status === 401) {
-      throw new Error("Your session has expired. Please login again");
+      // Do not throw a custom session expired error; let the global handler manage it
+      throw error;
     } else if (error.response?.status === 400) {
       throw new Error(error.response.data?.detail || "Invalid checkout data");
     }

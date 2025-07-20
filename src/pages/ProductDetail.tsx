@@ -16,7 +16,7 @@ import { useFeaturedProducts } from '@/hooks/useProducts';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from '@/hooks/use-toast';
 import ProductImageSlider from '@/components/ProductImageSlider';
-import { getImageUrl } from '@/utils/imageUrl';
+import { getImageUrl, getFirstImage } from '@/utils/imageUrl';
 
 const ProductDetail = () => {
   const { slug } = useParams();
@@ -67,15 +67,20 @@ const ProductDetail = () => {
   const handleAddToCart = () => {
     // Convert Django API product to local Product type for cart
     const cartProduct = {
-      id: product.id.toString(),
+      id: product.id,
       name: product.name,
+      slug: product.slug,
       description: product.description,
       price: product.price,
-      image: productImages[0],
-      category: product.category.name,
+      discount_price: product.discount_price,
+      is_featured: product.is_featured,
+      is_new_arrival: product.is_new_arrival,
       stock: product.stock,
       rating: product.rating,
-      reviewCount: product.review_count
+      review_count: product.review_count,
+      created_at: product.created_at,
+      images: [productImages[0]],
+      category: product.category
     };
 
     addToCart(cartProduct, quantity);
@@ -85,7 +90,7 @@ const ProductDetail = () => {
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-lg overflow-hidden bg-muted">
             <img
-              src={productImages[0]}
+              src={cartProduct.images[0]}
               alt={product.name}
               className="w-full h-full object-cover"
             />

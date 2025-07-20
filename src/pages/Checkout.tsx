@@ -100,8 +100,7 @@ const Checkout = () => {
         try {
           const response = await createCheckout({
             ...formData,
-            payment_method: formData.payment_method || 'flutterwave',
-            cart_items: cartItems
+            payment_method: formData.payment_method || 'flutterwave'
           }, token);
 
           if (!response.payment_url) {
@@ -142,22 +141,25 @@ const Checkout = () => {
       let errorMessage = 'Checkout failed. Please try again.';
       
       if (error.response) {
+        let backendMessage = error.response.data?.detail || error.response.data?.message;
         switch (error.response.status) {
           case 401:
-            errorMessage = 'Session expired. Please login again';
-            logout();
-            navigate('/login');
+            if (!isAuthenticated) {
+              errorMessage = 'Session expired. Please login again';
+              logout();
+              navigate('/login');
+            } else {
+              errorMessage = backendMessage || 'You are still logged in. Please try again.';
+            }
             break;
           case 400:
-            errorMessage = error.response.data?.detail || 
-                         error.response.data?.message || 
-                         'Invalid checkout data';
+            errorMessage = backendMessage || 'Invalid checkout data';
             break;
           case 403:
             errorMessage = 'Payment authorization failed';
             break;
           default:
-            errorMessage = `Service error (${error.response.status})`;
+            errorMessage = backendMessage || `Service error (${error.response.status})`;
         }
       } else if (error.message) {
         errorMessage = error.message;

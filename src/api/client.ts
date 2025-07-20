@@ -12,7 +12,7 @@ const PUBLIC_ENDPOINTS = [
 ];
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://makelacosmetic.uk/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
   timeout: 10000,
   withCredentials: true, // Essential for session cookies
   headers: {
@@ -73,8 +73,11 @@ apiClient.interceptors.response.use(
           
           const newAccessToken = response.data.access;
           const storage = localStorage.getItem('refresh') ? localStorage : sessionStorage;
-          
           storage.setItem('token', newAccessToken);
+          // Save new refresh token if provided (for rotation)
+          if (response.data.refresh) {
+            storage.setItem('refresh', response.data.refresh);
+          }
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
           
           return apiClient(originalRequest);

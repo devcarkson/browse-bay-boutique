@@ -5,12 +5,13 @@ export interface Product {
   description: string;
   price: number;
   discount_price?: number;
-  featured: boolean;
+  is_featured: boolean;
+  is_new_arrival: boolean;
   stock: number;
   rating: number;
   review_count: number;
   created_at: string;
-  images: ProductImage[];
+  images: string[]; // Array of URL strings from backend
   category: Category;
 }
 

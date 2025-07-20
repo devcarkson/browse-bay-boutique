@@ -1,16 +1,4 @@
-
-export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  category: string;
-  stock: number;
-  featured?: boolean;
-  rating?: number;
-  reviewCount?: number;
-}
+import { Product } from './product.types';
 
 export interface Category {
   id: string;
@@ -19,6 +7,7 @@ export interface Category {
 }
 
 export interface CartItem {
+  id?: string | number; // Add id for backend sync
   product: Product;
   quantity: number;
 }

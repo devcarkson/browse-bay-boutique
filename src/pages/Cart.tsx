@@ -6,9 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/contexts/CartContext';
+import { getFirstImage } from '@/utils/imageUrl';
 
 const Cart = () => {
   const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
+
+  console.log('Cart component - cart data:', cart);
+  console.log('Cart component - items length:', cart.items.length);
 
   if (cart.items.length === 0) {
     return (
@@ -44,16 +48,17 @@ const Cart = () => {
                 <div className="flex gap-4">
                   <div className="w-20 h-20 md:w-24 md:h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                     <img
-                      src={item.product.image}
+                      src={getFirstImage(item.product.images)}
                       alt={item.product.name}
                       className="w-full h-full object-cover"
+                      onError={(e) => (e.currentTarget.src = '/placeholder.svg')}
                     />
                   </div>
                   
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-sm md:text-base mb-1 line-clamp-2">
                       <Link 
-                        to={`/product/${item.product.id}`}
+                        to={`/product/${item.product.slug}`}
                         className="hover:text-primary"
                       >
                         {item.product.name}
@@ -73,7 +78,7 @@ const Cart = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                            onClick={() => updateQuantity(item.product.id.toString(), item.quantity - 1)}
                             disabled={item.quantity <= 1}
                             className="h-8 w-8 p-0"
                           >
@@ -85,7 +90,7 @@ const Cart = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                            onClick={() => updateQuantity(item.product.id.toString(), item.quantity + 1)}
                             disabled={item.quantity >= item.product.stock}
                             className="h-8 w-8 p-0"
                           >
@@ -96,7 +101,7 @@ const Cart = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => removeFromCart(item.product.id)}
+                          onClick={() => removeFromCart(item.product.id.toString())}
                           className="text-red-500 hover:text-red-700 h-8 w-8 p-0"
                         >
                           <Trash2 className="h-3 w-3" />
