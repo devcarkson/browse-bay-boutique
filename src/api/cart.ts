@@ -26,8 +26,8 @@ export const addCartItem = async (productId: string | number, quantity: number) 
   }
 };
 
-export const updateCartItem = async (itemId: string, quantity: number) => {
-  return apiClient.put(`/orders/cart/items/${itemId}/`, { quantity });
+export const updateCartItem = async (itemId: string, quantity: number, productId: number) => {
+  return apiClient.put(`/orders/cart/items/${itemId}/`, { quantity, product_id: productId });
 };
 
 export const removeCartItem = async (itemId: string) => {

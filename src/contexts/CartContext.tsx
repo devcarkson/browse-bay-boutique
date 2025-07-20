@@ -29,6 +29,7 @@ interface CartContextType {
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   getItemCount: () => number;
+  loading: boolean; // <-- add this
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -86,9 +87,14 @@ const cartReducer = (state: Cart, action: CartAction): Cart => {
 };
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Initialize cart from localStorage for unauthenticated users
+  const { isAuthenticated } = useAuth();
+
+  // Add a loading state to prevent UI from showing stale cart
+  const [loading, setLoading] = React.useState(true);
+
+  // Initialize cart from localStorage for unauthenticated users only
   const getInitialCart = (): Cart => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !isAuthenticated) {
       const savedCart = localStorage.getItem('cart');
       if (savedCart) {
         try {
@@ -102,111 +108,110 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const [cart, dispatch] = useReducer(cartReducer, getInitialCart());
-  const { isAuthenticated } = useAuth();
 
   // Save cart to localStorage for unauthenticated users
   React.useEffect(() => {
     if (!isAuthenticated && typeof window !== 'undefined') {
       localStorage.setItem('cart', JSON.stringify(cart));
-      console.log('Saved cart to localStorage:', cart);
+      // console.log('Saved cart to localStorage:', cart);
     }
   }, [cart, isAuthenticated]);
 
-  // Fetch backend cart on login
+  // Always fetch backend cart on mount and when auth changes
   React.useEffect(() => {
     const syncCart = async () => {
-      console.log('syncCart called, isAuthenticated:', isAuthenticated);
       if (isAuthenticated) {
         try {
-          console.log('Fetching cart from backend...');
           const backendCart = await fetchCart();
-          console.log('Raw backend cart response:', backendCart);
-          // Map backend cart to frontend Cart type
           const mappedCart = {
             items: backendCart.items || [],
             total: backendCart.subtotal || 0,
           };
-          console.log('Mapped cart data:', mappedCart);
           dispatch({ type: 'SET_CART', payload: mappedCart });
-          // Clear localStorage when user is authenticated
-          localStorage.removeItem('cart');
+          localStorage.removeItem('cart'); // Clear local cart
         } catch (e) {
           console.error('Error syncing cart:', e);
-          // Optionally handle error
         }
       } else {
-        console.log('User not authenticated, skipping cart sync');
+        // For unauthenticated users, load from localStorage
+        const savedCart = localStorage.getItem('cart');
+        if (savedCart) {
+          try {
+            dispatch({ type: 'SET_CART', payload: JSON.parse(savedCart) });
+          } catch (e) {
+            dispatch({ type: 'SET_CART', payload: { items: [], total: 0 } });
+          }
+        } else {
+          dispatch({ type: 'SET_CART', payload: { items: [], total: 0 } });
+        }
       }
+      setLoading(false);
     };
+    setLoading(true);
     syncCart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
+  // Debug log for cart state
+  console.log('CartContext: cart', cart, 'loading', loading);
+
   const addToCart = async (product: Product, quantity = 1) => {
-    console.log('addToCart called with:', { product, quantity });
-    console.log('Current cart state before add:', cart);
-    
-    dispatch({ type: 'ADD_ITEM', payload: { product, quantity } });
-    
     if (isAuthenticated) {
       try {
-        console.log('User authenticated, calling backend addCartItem...');
-        const res = await addCartItem(Number(product.id), quantity);
-        console.log('addCartItem response:', res);
-        
-        console.log('Fetching updated cart from backend...');
+        await addCartItem(Number(product.id), quantity);
         const backendCart = await fetchCart();
-        console.log('fetchCart after add:', backendCart);
-        
         const mappedCart = {
           items: backendCart.items || [],
           total: backendCart.subtotal || 0,
         };
-        console.log('Mapped cart after add:', mappedCart);
         dispatch({ type: 'SET_CART', payload: mappedCart });
       } catch (e) {
         console.error('addCartItem error:', e);
       }
     } else {
-      console.log('User not authenticated, only updating local cart');
+      dispatch({ type: 'ADD_ITEM', payload: { product, quantity } });
     }
   };
 
   const removeFromCart = async (productId: string) => {
-    dispatch({ type: 'REMOVE_ITEM', payload: { productId } });
     if (isAuthenticated) {
       try {
-        const item = cart.items.find(i => i.product.id.toString() === productId);
+        // Always fetch the latest cart before removing
+        const backendCart = await fetchCart();
+        const item = (backendCart.items || []).find(
+          (i: any) => i.product.id.toString() === productId
+        );
         if (item && item.id) {
           await removeCartItem(String(item.id));
-          // Sync cart after backend change
-          const backendCart = await fetchCart();
+          const refreshedCart = await fetchCart();
           const mappedCart = {
-            items: backendCart.items || [],
-            total: backendCart.subtotal || 0,
+            items: refreshedCart.items || [],
+            total: refreshedCart.subtotal || 0,
           };
           dispatch({ type: 'SET_CART', payload: mappedCart });
         }
       } catch (e) {
         console.error('removeFromCart error:', e);
       }
+    } else {
+      dispatch({ type: 'REMOVE_ITEM', payload: { productId } });
     }
   };
 
   const updateQuantity = async (productId: string, quantity: number) => {
-    console.log('updateQuantity called:', { productId, quantity });
-    dispatch({ type: 'UPDATE_QUANTITY', payload: { productId, quantity } });
-    
     if (isAuthenticated) {
       try {
-        const item = cart.items.find(i => i.product.id.toString() === productId);
+        // Always fetch the latest cart before updating
+        const backendCart = await fetchCart();
+        const item = (backendCart.items || []).find(
+          (i: any) => i.product.id.toString() === productId
+        );
         if (item && item.id) {
-          console.log('Updating quantity in backend for item:', item);
-          await updateCartItem(String(item.id), quantity);
-          // Sync cart after backend change
-          const backendCart = await fetchCart();
+          await updateCartItem(String(item.id), quantity, item.product.id);
+          const refreshedCart = await fetchCart();
           const mappedCart = {
-            items: backendCart.items || [],
-            total: backendCart.subtotal || 0,
+            items: refreshedCart.items || [],
+            total: refreshedCart.subtotal || 0,
           };
           dispatch({ type: 'SET_CART', payload: mappedCart });
         }
@@ -214,7 +219,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.error('updateQuantity error:', e);
       }
     } else {
-      console.log('User not authenticated, only updating local cart');
+      dispatch({ type: 'UPDATE_QUANTITY', payload: { productId, quantity } });
     }
   };
 
@@ -236,6 +241,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return cart.items.reduce((count, item) => count + item.quantity, 0);
   };
 
+  // Wrap children with loading check
   return (
     <CartContext.Provider value={{
       cart,
@@ -243,9 +249,10 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       removeFromCart,
       updateQuantity,
       clearCart,
-      getItemCount
+      getItemCount,
+      loading // <-- add this
     }}>
-      {children}
+      {loading ? null : children}
     </CartContext.Provider>
   );
 };

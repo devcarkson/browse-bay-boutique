@@ -19,7 +19,9 @@ interface CheckoutFormData {
 }
 
 const Checkout = () => {
-  const { cart } = useCart();
+  const { cart, loading: cartLoading } = useCart();
+  // Debug log for checkout cart state
+  console.log('Checkout page: cart', cart, 'loading', cartLoading);
   const { isAuthenticated, logout, token, refreshToken } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -82,25 +84,28 @@ const Checkout = () => {
       }
 
       // Prepare validated cart items
-      const cartItems = cart.items.map(item => {
-        if (!item.product?.id) {
-          throw new Error('Invalid product in cart');
-        }
-        return {
-          product_id: item.product.id.toString(),
-          quantity: Math.max(1, Math.min(Number(item.quantity), 99)), // Limit quantity to 99
-          price: Number(item.product.price) || 0,
-          name: item.product.name || '',
-          image: item.product.image || ''
-        };
-      });
+      const cartItems = Array.isArray(cart.items)
+        ? cart.items.map(item => {
+            if (!item.product?.id) {
+              throw new Error('Invalid product in cart');
+            }
+            return {
+              product_id: item.product.id.toString(),
+              quantity: Math.max(1, Math.min(Number(item.quantity), 99)), // Limit quantity to 99
+              price: Number(item.product.price) || 0,
+              name: item.product.name || '',
+              image: Array.isArray(item.product.images) && item.product.images.length > 0 ? item.product.images[0] : ''
+            };
+          })
+        : [];
 
       // Attempt checkout with token refresh if needed
       const attemptCheckout = async (attempt = 1): Promise<any> => {
         try {
           const response = await createCheckout({
             ...formData,
-            payment_method: formData.payment_method || 'flutterwave'
+            payment_method: formData.payment_method || 'flutterwave',
+            cart_items: cartItems // <-- pass cart_items explicitly
           }, token);
 
           if (!response.payment_url) {
@@ -171,7 +176,7 @@ const Checkout = () => {
     }
   };
 
-  if (!authChecked) {
+  if (cartLoading || !authChecked) {
     return (
       <div className="container mx-auto px-4 py-16">
         <div className="text-center">
@@ -181,7 +186,7 @@ const Checkout = () => {
     );
   }
 
-  if (!cart?.items?.length) {
+  if (!cart || !Array.isArray(cart.items) || cart.items.length === 0) {
     return (
       <div className="container mx-auto px-4 py-16">
         <div className="text-center">

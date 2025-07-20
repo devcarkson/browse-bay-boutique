@@ -9,7 +9,7 @@ import { useCart } from '@/contexts/CartContext';
 import { getFirstImage } from '@/utils/imageUrl';
 
 const Cart = () => {
-  const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { cart, updateQuantity, removeFromCart, clearCart, loading } = useCart();
 
   console.log('Cart component - cart data:', cart);
   console.log('Cart component - items length:', cart.items.length);
@@ -79,7 +79,7 @@ const Cart = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => updateQuantity(item.product.id.toString(), item.quantity - 1)}
-                            disabled={item.quantity <= 1}
+                            disabled={item.quantity <= 1 || loading}
                             className="h-8 w-8 p-0"
                           >
                             <Minus className="h-3 w-3" />
@@ -91,7 +91,7 @@ const Cart = () => {
                             variant="ghost"
                             size="sm"
                             onClick={() => updateQuantity(item.product.id.toString(), item.quantity + 1)}
-                            disabled={item.quantity >= item.product.stock}
+                            disabled={item.quantity >= item.product.stock || loading}
                             className="h-8 w-8 p-0"
                           >
                             <Plus className="h-3 w-3" />
@@ -103,6 +103,7 @@ const Cart = () => {
                           size="sm"
                           onClick={() => removeFromCart(item.product.id.toString())}
                           className="text-red-500 hover:text-red-700 h-8 w-8 p-0"
+                          disabled={loading}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
