@@ -1,5 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import {
+  fetchAddresses,
+  addAddress,
+  updateAddress,
+  deleteAddress,
+  setDefaultAddress,
+  Address as AddressType
+} from '@/api/addresses';
 import { Plus, MapPin, Edit, Trash2, Home, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,32 +32,9 @@ interface Address {
 }
 
 const Addresses = () => {
-  const [addresses, setAddresses] = useState<Address[]>([
-    {
-      id: '1',
-      type: 'home',
-      isDefault: true,
-      firstName: 'John',
-      lastName: 'Doe',
-      street: '123 Lagos Street',
-      city: 'Lagos',
-      state: 'Lagos State',
-      zipCode: '100001',
-      phone: '+234 801 234 5678',
-    },
-    {
-      id: '2',
-      type: 'work',
-      isDefault: false,
-      firstName: 'John',
-      lastName: 'Doe',
-      street: '456 Victoria Island',
-      city: 'Lagos',
-      state: 'Lagos State',
-      zipCode: '100002',
-      phone: '+234 801 234 5678',
-    },
-  ]);
+  const [addresses, setAddresses] = useState<AddressType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
@@ -86,25 +71,30 @@ const Addresses = () => {
     setFormData(prev => ({ ...prev, type: value }));
   };
 
-  const handleSave = () => {
-    if (editingAddress) {
-      setAddresses(prev => prev.map(addr => 
-        addr.id === editingAddress.id 
-          ? { ...addr, ...formData }
-          : addr
-      ));
-      toast.success('Address updated successfully');
-    } else {
-      const newAddress: Address = {
-        id: Date.now().toString(),
-        ...formData,
-        isDefault: addresses.length === 0,
-      };
-      setAddresses(prev => [...prev, newAddress]);
-      toast.success('Address added successfully');
+  useEffect(() => {
+    setLoading(true);
+    fetchAddresses()
+      .then(data => setAddresses(data))
+      .catch(() => setError('Failed to load addresses'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    try {
+      if (editingAddress) {
+        const updated = await updateAddress(editingAddress.id, formData);
+        setAddresses(prev => prev.map(addr => addr.id === updated.id ? updated : addr));
+        toast.success('Address updated successfully');
+      } else {
+        const created = await addAddress(formData);
+        setAddresses(prev => [...prev, created]);
+        toast.success('Address added successfully');
+      }
+      setIsDialogOpen(false);
+      resetForm();
+    } catch (err) {
+      toast.error('Failed to save address');
     }
-    setIsDialogOpen(false);
-    resetForm();
   };
 
   const handleEdit = (address: Address) => {
@@ -122,17 +112,24 @@ const Addresses = () => {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setAddresses(prev => prev.filter(addr => addr.id !== id));
-    toast.success('Address deleted successfully');
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteAddress(id);
+      setAddresses(prev => prev.filter(addr => addr.id !== id));
+      toast.success('Address deleted successfully');
+    } catch {
+      toast.error('Failed to delete address');
+    }
   };
 
-  const handleSetDefault = (id: string) => {
-    setAddresses(prev => prev.map(addr => ({
-      ...addr,
-      isDefault: addr.id === id,
-    })));
-    toast.success('Default address updated');
+  const handleSetDefault = async (id: string) => {
+    try {
+      const updated = await setDefaultAddress(id);
+      setAddresses(prev => prev.map(addr => ({ ...addr, isDefault: addr.id === id })));
+      toast.success('Default address updated');
+    } catch {
+      toast.error('Failed to set default address');
+    }
   };
 
   const getTypeIcon = (type: string) => {
@@ -273,63 +270,69 @@ const Addresses = () => {
         </Dialog>
       </div>
 
-      <div className="grid gap-4">
-        {addresses.map((address) => (
-          <Card key={address.id}>
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    {getTypeIcon(address.type)}
-                    <Badge variant={getTypeColor(address.type)}>
-                      {address.type.charAt(0).toUpperCase() + address.type.slice(1)}
-                    </Badge>
-                    {address.isDefault && (
-                      <Badge variant="default">Default</Badge>
+      {loading ? (
+        <div className="text-center py-8">Loading addresses...</div>
+      ) : error ? (
+        <div className="text-center text-red-500 py-8">{error}</div>
+      ) : (
+        <div className="grid gap-4">
+          {addresses.map((address) => (
+            <Card key={address.id}>
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      {getTypeIcon(address.type)}
+                      <Badge variant={getTypeColor(address.type)}>
+                        {address.type.charAt(0).toUpperCase() + address.type.slice(1)}
+                      </Badge>
+                      {address.isDefault && (
+                        <Badge variant="default">Default</Badge>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium">
+                        {address.firstName} {address.lastName}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{address.street}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {address.city}, {address.state} {address.zipCode}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{address.phone}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {!address.isDefault && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSetDefault(address.id)}
+                      >
+                        Set Default
+                      </Button>
                     )}
-                  </div>
-                  <div className="space-y-1">
-                    <p className="font-medium">
-                      {address.firstName} {address.lastName}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{address.street}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {address.city}, {address.state} {address.zipCode}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{address.phone}</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  {!address.isDefault && (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleSetDefault(address.id)}
+                      onClick={() => handleEdit(address)}
                     >
-                      Set Default
+                      <Edit className="h-4 w-4" />
                     </Button>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(address)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDelete(address.id)}
-                    disabled={address.isDefault}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(address.id)}
+                      disabled={address.isDefault}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

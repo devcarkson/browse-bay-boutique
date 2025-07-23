@@ -98,8 +98,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSliderCard = false
                 </span>
               </div>
             )}
-            <div className="text-lg font-bold text-primary">
-              ₦{Number(product.price).toLocaleString('en-NG')}
+            <div className="flex items-center gap-2">
+              <div className="text-lg font-bold text-primary">
+                ₦{Number(product.discount_price ?? product.price).toLocaleString('en-NG')}
+              </div>
+              {product.discount_price && (
+                <div className="text-sm text-muted-foreground line-through">
+                  ₦{Number(product.price).toLocaleString('en-NG')}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -124,10 +131,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSliderCard = false
               </span>
             </div>
           )}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 justify-between">
             <span className="text-2xl font-bold text-primary">
-              ₦{Number(product.price).toLocaleString('en-NG')}
+              ₦{Number(product.discount_price ?? product.price).toLocaleString('en-NG')}
             </span>
+            {product.discount_price && (
+              <span className="text-sm text-muted-foreground line-through">
+                ₦{Number(product.price).toLocaleString('en-NG')}
+              </span>
+            )}
             <span className="text-sm text-muted-foreground">
               {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
             </span>

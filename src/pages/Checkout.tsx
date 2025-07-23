@@ -10,6 +10,8 @@ import CheckoutForm from '@/components/CheckoutForm';
 import OrderSummary from '@/components/OrderSummary';
 
 interface CheckoutFormData {
+  first_name: string;
+  last_name: string;
   shipping_address: string;
   shipping_city: string;
   shipping_state: string;

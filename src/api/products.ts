@@ -1,6 +1,20 @@
 import apiClient from './client';
 import { Product, ProductListResponse } from '@/types/product.types';
 
+export const getProductReviews = async (slug: string) => {
+  const { data } = await apiClient.get(`/products/${slug}/reviews/`);
+  return data;
+};
+
+export const postProductReview = async (slug: string, review: { rating: number; comment: string }, token: string) => {
+  const { data } = await apiClient.post(
+    `/products/${slug}/reviews/`,
+    review,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return data;
+};
+
 export const ProductService = {
   getProducts: async (params?: Record<string, any>): Promise<ProductListResponse> => {
     const { data } = await apiClient.get('/products/', { params });

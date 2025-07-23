@@ -22,6 +22,10 @@ import Profile from "@/pages/Profile";
 import Addresses from "@/pages/Addresses";
 import Settings from "@/pages/Settings";
 import NotFound from "@/pages/NotFound";
+import OrderHistory from '@/pages/OrderHistory';
+import OrderDetail from '@/pages/OrderDetail';
+import Wishlist from '@/pages/Wishlist';
+import Notifications from '@/pages/Notifications';
 
 export default function App() {
   return (
@@ -72,6 +76,38 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute>
+                <OrderHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders/:id"
+            element={
+              <ProtectedRoute>
+                <OrderDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/wishlist"
+            element={
+              <ProtectedRoute>
+                <Wishlist />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <Notifications />
               </ProtectedRoute>
             }
           />

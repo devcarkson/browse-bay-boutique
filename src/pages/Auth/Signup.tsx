@@ -19,6 +19,8 @@ const Signup = () => {
     username: '',
     email: '',
     phone: '',
+    first_name: '',
+    last_name: '',
     password: '',
     confirmPassword: '',
     acceptTerms: false,
@@ -56,6 +58,8 @@ const Signup = () => {
         email: formData.email,
         password: formData.password,
         phone: formData.phone,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
       };
 
       await axios.post('https://makelacosmetic.uk/api/auth/register/', payload);
@@ -87,6 +91,36 @@ const Signup = () => {
           </CardHeader>
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* First Name */}
+              <div>
+                <Label htmlFor="first_name" className="text-pink-700 font-semibold">First Name</Label>
+                <Input
+                  id="first_name"
+                  name="first_name"
+                  type="text"
+                  placeholder="Enter your first name"
+                  value={formData.first_name}
+                  onChange={handleInputChange}
+                  required
+                />
+                {errors.first_name && <p className="text-red-500 text-sm mt-1">{errors.first_name[0]}</p>}
+              </div>
+
+              {/* Last Name */}
+              <div>
+                <Label htmlFor="last_name" className="text-pink-700 font-semibold">Last Name</Label>
+                <Input
+                  id="last_name"
+                  name="last_name"
+                  type="text"
+                  placeholder="Enter your last name"
+                  value={formData.last_name}
+                  onChange={handleInputChange}
+                  required
+                />
+                {errors.last_name && <p className="text-red-500 text-sm mt-1">{errors.last_name[0]}</p>}
+              </div>
+
               {/* Username */}
               <div>
                 <Label htmlFor="username" className="text-pink-700 font-semibold">Username</Label>

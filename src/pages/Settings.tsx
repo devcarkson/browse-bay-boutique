@@ -1,5 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import {
+  fetchSettings,
+  updateSettings,
+  deleteAccount,
+  UserSettings
+} from '@/api/settings';
 import { Bell, Shield, Palette, Globe, CreditCard, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,26 +18,51 @@ import { toast } from 'sonner';
 
 const Settings = () => {
   const { logout } = useAuth();
-  const [settings, setSettings] = useState({
-    emailNotifications: true,
-    smsNotifications: false,
-    orderUpdates: true,
-    promotionalEmails: true,
-    twoFactorAuth: false,
-    language: 'en',
-    currency: 'NGN',
-    theme: 'light',
-  });
+  const [settings, setSettings] = useState<UserSettings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  const handleSettingChange = (key: string, value: boolean | string) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
-    toast.success('Setting updated');
+  useEffect(() => {
+    setLoading(true);
+    fetchSettings()
+      .then(data => setSettings(data))
+      .catch(() => setError('Failed to load settings'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSettingChange = async (key: string, value: boolean | string) => {
+    if (!settings) return;
+    const updated = { ...settings, [key]: value };
+    setSettings(updated);
+    try {
+      await updateSettings({ [key]: value });
+      toast.success('Setting updated');
+    } catch {
+      toast.error('Failed to update setting');
+    }
   };
 
-  const handleDeleteAccount = () => {
-    // This would typically show a confirmation dialog
-    toast.error('Account deletion requires confirmation');
+  const handleDeleteAccount = async () => {
+    if (!window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) return;
+    setDeleting(true);
+    try {
+      await deleteAccount();
+      toast.success('Account deleted');
+      logout();
+    } catch {
+      toast.error('Failed to delete account');
+    } finally {
+      setDeleting(false);
+    }
   };
+
+  if (loading) {
+    return <div className="text-center py-8">Loading settings...</div>;
+  }
+  if (error || !settings) {
+    return <div className="text-center text-red-500 py-8">{error || 'Settings not found.'}</div>;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -230,8 +261,8 @@ const Settings = () => {
               <p className="text-sm text-muted-foreground">
                 Once you delete your account, there is no going back. Please be certain.
               </p>
-              <Button variant="destructive" onClick={handleDeleteAccount}>
-                Delete Account
+              <Button variant="destructive" onClick={handleDeleteAccount} disabled={deleting}>
+                {deleting ? 'Deleting...' : 'Delete Account'}
               </Button>
             </div>
           </CardContent>

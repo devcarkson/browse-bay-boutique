@@ -9,6 +9,8 @@ interface CartItem {
 }
 
 export interface CheckoutData {
+  first_name: string;
+  last_name: string;
   shipping_address: string;
   shipping_city: string;
   shipping_state: string;

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ShoppingCart, Heart, Share2, Star, MessageCircle, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,9 @@ import { useCart } from '@/contexts/CartContext';
 import { toast } from '@/hooks/use-toast';
 import ProductImageSlider from '@/components/ProductImageSlider';
 import { getImageUrl, getFirstImage } from '@/utils/imageUrl';
+import { getProductReviews, postProductReview } from '@/api/products';
+import { addToWishlist } from '@/api/wishlist';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ProductDetail = () => {
   const { slug } = useParams();
@@ -28,6 +31,28 @@ const ProductDetail = () => {
   
   const { data: product, isLoading, error, refetch } = useProduct(slug!);
   const { data: featuredProducts } = useFeaturedProducts();
+  const { isAuthenticated, token } = useAuth();
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewsError, setReviewsError] = useState('');
+
+  // Fetch reviews
+  const fetchReviews = async () => {
+    setReviewsLoading(true);
+    setReviewsError('');
+    try {
+      const data = await getProductReviews(slug!);
+      setReviews(data);
+    } catch (e: any) {
+      setReviewsError('Failed to load reviews');
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (slug) fetchReviews();
+  }, [slug]);
 
   if (isLoading) {
     return (
@@ -59,9 +84,14 @@ const ProductDetail = () => {
   }
 
   // Get product images with proper URLs
-  const productImages = Array.isArray(product.images) && product.images.length > 0
-  ? product.images.map(img => getImageUrl(typeof img === 'string' ? img : img.image))
-  : ['/placeholder.svg'];
+  // const productImages = Array.isArray(product.images) && product.images.length > 0
+  // ? product.images.map(img => getImageUrl(typeof img === 'string' ? img : img.image))
+  // : ['/placeholder.svg'];
+
+    const productImages = Array.isArray(product.images) && product.images.length > 0
+    ? product.images.map(img => getImageUrl(img))
+    : ['/placeholder.svg'];
+
 
 
   const handleAddToCart = () => {
@@ -125,14 +155,31 @@ const ProductDetail = () => {
     }
   };
 
-  const handleAddToWishlist = () => {
-    toast({
-      title: "💕 Added to wishlist!",
-      description: `${product.name} has been added to your wishlist.`
-    });
+  const handleAddToWishlist = async () => {
+    if (!isAuthenticated || !token) {
+      toast({
+        title: "Login required",
+        description: "You must be logged in to add to wishlist.",
+        variant: "destructive"
+      });
+      return;
+    }
+    try {
+      await addToWishlist(product.id);
+      toast({
+        title: "💕 Added to wishlist!",
+        description: `${product.name} has been added to your wishlist.`,
+      });
+    } catch (e: any) {
+      toast({
+        title: "Failed to add to wishlist",
+        description: e?.response?.data?.detail || e.message || 'Error',
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleSubmitReview = () => {
+  const handleSubmitReview = async () => {
     if (userRating === 0) {
       toast({
         title: "Please rate the product",
@@ -141,15 +188,31 @@ const ProductDetail = () => {
       });
       return;
     }
-
-    toast({
-      title: "Review submitted! ⭐",
-      description: "Thank you for your feedback!"
-    });
-    
-    setShowReviewForm(false);
-    setUserRating(0);
-    setReview('');
+    if (!isAuthenticated || !token) {
+      toast({
+        title: "Login required",
+        description: "You must be logged in to submit a review.",
+        variant: "destructive"
+      });
+      return;
+    }
+    try {
+      await postProductReview(slug!, { rating: userRating, comment: review }, token);
+      toast({
+        title: "Review submitted! ⭐",
+        description: "Thank you for your feedback!"
+      });
+      setShowReviewForm(false);
+      setUserRating(0);
+      setReview('');
+      fetchReviews();
+    } catch (e: any) {
+      toast({
+        title: "Failed to submit review",
+        description: e?.response?.data?.detail || e.message || 'Error',
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -296,7 +359,6 @@ const ProductDetail = () => {
               Write Review
             </Button>
           </div>
-
           {showReviewForm && (
             <Card>
               <CardContent className="p-6 space-y-4">
@@ -326,6 +388,30 @@ const ProductDetail = () => {
               </CardContent>
             </Card>
           )}
+          <div className="mt-6">
+            {reviewsLoading ? (
+              <LoadingSpinner size="md" />
+            ) : reviewsError ? (
+              <ErrorMessage message={reviewsError} onRetry={fetchReviews} />
+            ) : reviews.length === 0 ? (
+              <p className="text-muted-foreground">No reviews yet. Be the first to review!</p>
+            ) : (
+              <div className="space-y-4">
+                {reviews.map((r: any) => (
+                  <Card key={r.id}>
+                    <CardContent className="py-4 px-6">
+                      <div className="flex items-center gap-2 mb-1">
+                        <RatingStars rating={r.rating} readonly size="sm" />
+                        <span className="text-xs text-muted-foreground">{r.user}</span>
+                        <span className="text-xs text-muted-foreground ml-auto">{new Date(r.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <div className="text-sm">{r.comment}</div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Similar Products */}

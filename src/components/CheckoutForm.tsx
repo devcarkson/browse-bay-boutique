@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { User, Loader } from 'lucide-react';
 
 interface CheckoutFormData {
+  first_name: string;
+  last_name: string;
   shipping_address: string;
   shipping_city: string;
   shipping_state: string;
@@ -84,6 +86,34 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+          {/* First Name */}
+          <div>
+            <Label htmlFor="first_name">First Name *</Label>
+            <Input
+              id="first_name"
+              {...register('first_name', { required: 'First name is required' })}
+              placeholder="Enter your first name"
+              disabled={isLoading}
+            />
+            {errors.first_name && (
+              <p className="text-sm text-red-500 mt-1">{errors.first_name.message}</p>
+            )}
+          </div>
+
+          {/* Last Name */}
+          <div>
+            <Label htmlFor="last_name">Last Name *</Label>
+            <Input
+              id="last_name"
+              {...register('last_name', { required: 'Last name is required' })}
+              placeholder="Enter your last name"
+              disabled={isLoading}
+            />
+            {errors.last_name && (
+              <p className="text-sm text-red-500 mt-1">{errors.last_name.message}</p>
+            )}
+          </div>
+
           {/* Address Field */}
           <div>
             <Label htmlFor="shipping_address">Street Address *</Label>
