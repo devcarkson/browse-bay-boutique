@@ -181,7 +181,7 @@ const Profile = () => {
                 />
               </div>
 
-              <div>
+              {/* <div>
                 <Label htmlFor="address">Address</Label>
                 <Input
                   id="address"
@@ -202,7 +202,7 @@ const Profile = () => {
                   onChange={handleInputChange}
                   disabled={!isEditing}
                 />
-              </div>
+              </div> */}
             </CardContent>
           </Card>
         </div>

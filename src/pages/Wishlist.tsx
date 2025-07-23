@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { fetchWishlist, removeFromWishlist } from '@/api/wishlist';
+import SimpleProductCard from '@/components/SimpleProductCard';
 
 const Wishlist = () => {
   const [wishlist, setWishlist] = useState<any[]>([]);
@@ -50,19 +52,11 @@ const Wishlist = () => {
           ) : wishlist.length === 0 ? (
             <p className="text-muted-foreground">Your wishlist is empty.</p>
           ) : (
-            <ul className="space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:gap-6">
               {wishlist.map(item => (
-                <li key={item.id} className="flex justify-between items-center border rounded-lg p-4">
-                  <div>
-                    <span className="font-medium">{item.product?.name}</span>
-                    <span className="ml-2 text-muted-foreground">₦{item.product?.price}</span>
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={() => handleRemove(item.id)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </li>
+                <SimpleProductCard key={item.product?.slug} product={item.product} />
               ))}
-            </ul>
+            </div>
           )}
         </CardContent>
       </Card>
