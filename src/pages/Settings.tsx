@@ -183,8 +183,6 @@ const Settings = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="fr">Français</SelectItem>
-                    <SelectItem value="es">Español</SelectItem>
                     <SelectItem value="yo">Yorùbá</SelectItem>
                     <SelectItem value="ig">Igbo</SelectItem>
                     <SelectItem value="ha">Hausa</SelectItem>

@@ -1,17 +1,46 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Mail, Phone, MapPin, Clock } from 'lucide-react';
+import apiClient from '@/api/client';
 
 const Contact = () => {
-  const handleSubmit = (e: React.FormEvent) => {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission logic here
-    console.log('Contact form submitted');
+    setLoading(true);
+    setSuccess('');
+    setError('');
+    try {
+      await apiClient.post('/auth/contact/', {
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        subject,
+        message,
+      });
+      setSuccess('Message sent! We will get back to you soon.');
+      setFirstName('');
+      setLastName('');
+      setEmail('');
+      setSubject('');
+      setMessage('');
+    } catch (err: any) {
+      setError('Failed to send message. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -33,41 +62,76 @@ const Contact = () => {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" placeholder="Your first name" className="mt-1" />
+                    <Input
+                      id="firstName"
+                      placeholder="Your first name"
+                      className="mt-1"
+                      value={firstName}
+                      onChange={e => setFirstName(e.target.value)}
+                      required
+                    />
                   </div>
                   <div>
                     <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" placeholder="Your last name" className="mt-1" />
+                    <Input
+                      id="lastName"
+                      placeholder="Your last name"
+                      className="mt-1"
+                      value={lastName}
+                      onChange={e => setLastName(e.target.value)}
+                      required
+                    />
                   </div>
                 </div>
                 
                 <div>
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="your.email@example.com" className="mt-1" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your.email@example.com"
+                    className="mt-1"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                  />
                 </div>
                 
                 <div>
                   <Label htmlFor="subject">Subject</Label>
-                  <Input id="subject" placeholder="What is this about?" className="mt-1" />
+                  <Input
+                    id="subject"
+                    placeholder="What is this about?"
+                    className="mt-1"
+                    value={subject}
+                    onChange={e => setSubject(e.target.value)}
+                    required
+                  />
                 </div>
                 
                 <div>
                   <Label htmlFor="message">Message</Label>
-                  <Textarea 
-                    id="message" 
-                    placeholder="Tell us more about your inquiry..." 
-                    className="mt-1 min-h-[120px]" 
+                  <Textarea
+                    id="message"
+                    placeholder="Tell us more about your inquiry..."
+                    className="mt-1 min-h-[120px]"
+                    value={message}
+                    onChange={e => setMessage(e.target.value)}
+                    required
                   />
                 </div>
                 
-                <Button type="submit" className="w-full">
-                  Send Message
+                {success && <p className="text-green-600">{success}</p>}
+                {error && <p className="text-red-500">{error}</p>}
+                
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? 'Sending...' : 'Send Message'}
                 </Button>
               </form>
             </CardContent>
           </Card>
           
-          {/* Contact Information */}
+          {/* Contact Information (unchanged) */}
           <div className="space-y-6">
             <Card>
               <CardHeader>
@@ -78,7 +142,7 @@ const Contact = () => {
                   <Mail className="h-5 w-5 text-primary" />
                   <div>
                     <p className="font-medium">Email</p>
-                    <p className="text-muted-foreground">support@ecoshop.com</p>
+                    <p className="text-muted-foreground">support@sgb.ng</p>
                   </div>
                 </div>
                 
@@ -86,7 +150,7 @@ const Contact = () => {
                   <Phone className="h-5 w-5 text-primary" />
                   <div>
                     <p className="font-medium">Phone</p>
-                    <p className="text-muted-foreground">+1 (555) 123-4567</p>
+                    <p className="text-muted-foreground">+1237040080721</p>
                   </div>
                 </div>
                 
@@ -95,9 +159,8 @@ const Contact = () => {
                   <div>
                     <p className="font-medium">Address</p>
                     <p className="text-muted-foreground">
-                      123 Eco Street<br />
-                      Green City, GC 12345<br />
-                      United States
+                      123 Eco Street 
+                      Green City, GC 12345, Nigeria
                     </p>
                   </div>
                 </div>
@@ -107,9 +170,7 @@ const Contact = () => {
                   <div>
                     <p className="font-medium">Business Hours</p>
                     <p className="text-muted-foreground">
-                      Monday - Friday: 9:00 AM - 6:00 PM<br />
-                      Saturday: 10:00 AM - 4:00 PM<br />
-                      Sunday: Closed
+                      Monday - Sunday: 24/7
                     </p>
                   </div>
                 </div>
