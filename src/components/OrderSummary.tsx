@@ -9,8 +9,8 @@ interface OrderSummaryProps {
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({ cart }) => {
-  const shipping = cart.total > 50000 ? 0 : 999;
-  const tax = Math.round(cart.total * 0.08);
+  const shipping = cart.total > 0 ? 0 : 99;
+  const tax = Math.round(cart.total * 0.00);
   const finalTotal = cart.total + shipping + tax;
 
   return (
@@ -40,10 +40,10 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ cart }) => {
           </div>
           <div className="flex justify-between text-sm">
             <span>Shipping</span>
-            <span>{shipping === 0 ? 'Free' : `₦${shipping.toLocaleString()}`}</span>
+            <span>{shipping === 0 ? 'Depend On Your Address' : `₦${shipping.toLocaleString()}`}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span>Tax (8%)</span>
+            <span>Tax (0%)</span>
             <span>₦{tax.toLocaleString()}</span>
           </div>
         </div>
