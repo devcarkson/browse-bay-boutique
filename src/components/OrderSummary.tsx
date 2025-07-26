@@ -55,9 +55,9 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ cart }) => {
           <span>₦{finalTotal.toLocaleString()}</span>
         </div>
 
-        {cart.total < 50000 && (
+        {cart.total < 30000 && (
           <p className="text-xs text-muted-foreground text-center">
-            Add ₦{(50000 - cart.total).toLocaleString()} more for free shipping!
+            Add ₦{(30000 - cart.total).toLocaleString()} more for free shipping!
           </p>
         )}
       </CardContent>
