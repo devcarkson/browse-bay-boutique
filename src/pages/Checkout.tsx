@@ -563,7 +563,8 @@ const Checkout = () => {
     messageLines.push(`*Total:* ₦${totalAmount}`);
 
     const encodedMessage = encodeURIComponent(messageLines.join('\n'));
-    const phoneNumber = '2348138824521';
+    // const phoneNumber = '2348138824521';
+    const phoneNumber = '2347040080721';
 
     window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
   };

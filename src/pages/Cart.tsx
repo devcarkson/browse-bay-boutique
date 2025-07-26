@@ -32,7 +32,7 @@ const Cart = () => {
   }
 
   const shipping = cart.total > 50 ? 0 : 9.99;
-  const tax = cart.total * 0.08;
+  const tax = cart.total * 0.00;
   const finalTotal = cart.total + shipping + tax;
 
   return (
