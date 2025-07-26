@@ -6,7 +6,7 @@ const About = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold text-center mb-8">About EcoShop</h1>
+        <h1 className="text-4xl font-bold text-center mb-8">About SBG</h1>
         
         <div className="grid md:grid-cols-2 gap-8 mb-12">
           <Card>
@@ -15,7 +15,7 @@ const About = () => {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                At EcoShop, we're committed to providing high-quality, sustainable products 
+                At SBG, we're committed to providing high-quality, sustainable products 
                 that make a positive impact on both your life and the environment. We believe 
                 in responsible commerce that benefits everyone.
               </p>
@@ -28,7 +28,7 @@ const About = () => {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Founded in 2020, EcoShop began as a small initiative to make eco-friendly 
+                Founded in 2025, SBG began as a small initiative to make eco-friendly 
                 products more accessible to everyone. Today, we're proud to serve customers 
                 worldwide with our carefully curated selection of sustainable goods.
               </p>
@@ -37,7 +37,7 @@ const About = () => {
         </div>
         
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-semibold mb-6">Why Choose EcoShop?</h2>
+          <h2 className="text-3xl font-semibold mb-6">Why Choose SBG?</h2>
           <div className="grid md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
