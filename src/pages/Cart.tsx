@@ -160,9 +160,9 @@ const Cart = () => {
                 <span>₦{finalTotal.toLocaleString()}</span>
               </div>
 
-              {cart.total < 50000 && (
+              {cart.total < 30000 && (
                 <p className="text-xs text-muted-foreground">
-                  Add ₦{(50000 - cart.total).toLocaleString()} more for free shipping!
+                  Add ₦{(30000 - cart.total).toLocaleString()} more for free shipping!
                 </p>
               )}
 
