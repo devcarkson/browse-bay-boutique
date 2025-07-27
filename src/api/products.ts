@@ -17,6 +17,7 @@ export const postProductReview = async (slug: string, review: { rating: number; 
 
 export const ProductService = {
   getProducts: async (params?: Record<string, any>): Promise<ProductListResponse> => {
+    console.log('Fetching products with params:', params);
     const { data } = await apiClient.get('/products/', { params });
     return data;
   },

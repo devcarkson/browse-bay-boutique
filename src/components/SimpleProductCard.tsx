@@ -60,11 +60,11 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({ product }) => {
           {/* Price */}
           <div className="flex items-center gap-2">
             <div className="text-lg md:text-xl font-bold text-primary">
-              ₦{Number(product.discount_price ?? product.price).toLocaleString()}
+              ₦{Number(product.price ?? product.price).toLocaleString()}
             </div>
             {product.discount_price && (
               <div className="text-sm text-muted-foreground line-through">
-                ₦{Number(product.price).toLocaleString()}
+                ₦{Number(product.discount_price).toLocaleString()}
               </div>
             )}
           </div>

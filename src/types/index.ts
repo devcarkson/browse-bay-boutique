@@ -1,9 +1,10 @@
 import { Product } from './product.types';
 
 export interface Category {
-  id: string;
+  id: number;
   name: string;
   slug: string;
+  image?: string;
 }
 
 export interface CartItem {
@@ -43,9 +44,9 @@ export interface Address {
 }
 
 export interface FilterOptions {
-  category?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  inStock?: boolean;
-  searchTerm?: string;
+  searchTerm: string;
+  category: string | number; // Accept both string and number
+  minPrice: number;
+  maxPrice: number;
+  inStock: boolean;
 }

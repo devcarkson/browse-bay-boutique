@@ -100,11 +100,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSliderCard = false
             )}
             <div className="flex items-center gap-2">
               <div className="text-lg font-bold text-primary">
-                ₦{Number(product.discount_price ?? product.price).toLocaleString('en-NG')}
+                ₦{Number(product.price ?? product.price).toLocaleString('en-NG')}
               </div>
               {product.discount_price && (
                 <div className="text-sm text-muted-foreground line-through">
-                  ₦{Number(product.price).toLocaleString('en-NG')}
+                  ₦{Number(product.discount_price).toLocaleString('en-NG')}
                 </div>
               )}
             </div>
@@ -131,11 +131,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSliderCard = false
               </span>
             </div>
           )}
-          <div className="flex items-center gap-2 justify-between">
+          {/* <div className="flex items-center gap-2 justify-between">
             <span className="text-2xl font-bold text-primary">
-              ₦{Number(product.discount_price ?? product.price).toLocaleString('en-NG')}
+              ₦{Number(product.price ?? product.discount_price).toLocaleString('en-NG')}
             </span>
-            {product.discount_price && (
+            {product.price && (
               <span className="text-sm text-muted-foreground line-through">
                 ₦{Number(product.price).toLocaleString('en-NG')}
               </span>
@@ -143,7 +143,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSliderCard = false
             <span className="text-sm text-muted-foreground">
               {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
             </span>
-          </div>
+          </div> */}
         </CardContent>
         <CardFooter className="p-4 pt-0">
           <Button

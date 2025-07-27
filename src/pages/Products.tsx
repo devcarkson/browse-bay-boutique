@@ -14,6 +14,8 @@ import ErrorMessage from '@/components/ErrorMessage';
 import { useProducts } from '@/hooks/useProducts';
 import { FilterOptions } from '@/types';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const Products = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -28,12 +30,23 @@ const Products = () => {
     inStock: false
   });
 
+  // Sync category from URL query string
+  const location = useLocation();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const urlCategory = params.get('category') || '';
+    setFilters(prev => ({ ...prev, category: urlCategory }));
+  }, [location.search]);
+
   const [sortBy, setSortBy] = useState<string>('name');
 
   const apiParams = useMemo(() => {
     const params: Record<string, any> = {};
     if (filters.searchTerm) params.search = filters.searchTerm;
-    if (filters.category) params.category = filters.category;
+    // Only send category if it is a non-empty string and not 'all'
+    if (filters.category && typeof filters.category === 'string' && filters.category.trim() !== '' && filters.category !== 'all') {
+      params.category = filters.category;
+    }
     if (filters.minPrice) params.min_price = filters.minPrice;
     if (filters.maxPrice) params.max_price = filters.maxPrice;
     if (filters.inStock) params.in_stock = true;
@@ -203,6 +216,7 @@ const Products = () => {
                     <SelectItem value="price-low">Price: Low to High</SelectItem>
                     <SelectItem value="price-high">Price: High to Low</SelectItem>
                     <SelectItem value="rating">Rating</SelectItem>
+                    <SelectItem value="category">Category</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -247,3 +261,4 @@ const Products = () => {
 };
 
 export default Products;
+ 

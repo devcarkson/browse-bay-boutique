@@ -9,6 +9,9 @@ import {
   LogOut,
   LayoutDashboard,
 } from "lucide-react";
+import { useEffect } from "react";
+import { getCategories } from "@/api/categories";
+import { Category } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCart } from "@/contexts/CartContext";
@@ -28,6 +31,12 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Categories from backend
+  const [categories, setCategories] = useState<Category[]>([]);
+  useEffect(() => {
+    getCategories().then(setCategories).catch(() => setCategories([]));
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -65,6 +74,23 @@ const Header = () => {
             <Link to="/products" className="hover:text-primary">Products</Link>
             <Link to="/about" className="hover:text-primary">About</Link>
             <Link to="/contact" className="hover:text-primary">Contact</Link>
+            {/* Categories Dropdown */}
+            <div className="relative ml-6">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                    Categories <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  {categories.map((cat) => (
+                    <DropdownMenuItem asChild key={cat.id}>
+                      <Link to={`/products?category=${cat.id}`}>{cat.name}</Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </nav>
 
           {/* Right Actions */}
@@ -136,6 +162,22 @@ const Header = () => {
                     <Link to="/products" onClick={() => setIsOpen(false)}>Products</Link>
                     <Link to="/about" onClick={() => setIsOpen(false)}>About</Link>
                     <Link to="/contact" onClick={() => setIsOpen(false)}>Contact</Link>
+                    {/* Mobile Categories Dropdown */}
+                    <details className="group">
+                      <summary className="cursor-pointer py-2 px-1 rounded hover:bg-primary/10 hover:text-primary transition-colors font-medium">Categories</summary>
+                      <div className="flex flex-col pl-4">
+                        {categories.map((cat) => (
+                          <Link
+                            key={cat.id}
+                            to={`/products?category=${cat.id}`}
+                            onClick={() => setIsOpen(false)}
+                            className="py-1 text-sm hover:text-primary"
+                          >
+                            {cat.name}
+                          </Link>
+                        ))}
+                      </div>
+                    </details>
 
                     {isAuthenticated ? (
                       <>
