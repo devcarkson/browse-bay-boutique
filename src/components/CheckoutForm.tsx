@@ -10,11 +10,15 @@ import { User, Loader } from 'lucide-react';
 interface CheckoutFormData {
   first_name: string;
   last_name: string;
+  phone?: string;
+  email?: string;
   shipping_address: string;
   shipping_city: string;
   shipping_state: string;
   shipping_country: string;
   shipping_zip_code: string;
+  order_notes?: string;
+  delivery_preference?: string;
   payment_method: string;
 }
 
@@ -111,6 +115,48 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
             />
             {errors.last_name && (
               <p className="text-sm text-red-500 mt-1">{errors.last_name.message}</p>
+            )}
+          </div>
+
+          {/* Phone Number */}
+          <div>
+            <Label htmlFor="phone">Phone Number (Optional)</Label>
+            <Input
+              id="phone"
+              {...register('phone', {
+                pattern: {
+                  value: /^(\+234|0)[789][01]\d{8}$/,
+                  message: 'Please enter a valid Nigerian phone number'
+                }
+              })}
+              placeholder="+234 xxx xxx xxxx or 0xxx xxx xxxx"
+              disabled={isLoading}
+            />
+            {errors.phone && (
+              <p className="text-sm text-red-500 mt-1">{errors.phone.message}</p>
+            )}
+            <p className="text-xs text-muted-foreground mt-1">
+              Recommended for delivery coordination
+            </p>
+          </div>
+
+          {/* Email */}
+          <div>
+            <Label htmlFor="email">Email Address (Optional)</Label>
+            <Input
+              id="email"
+              type="email"
+              {...register('email', {
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: 'Please enter a valid email address'
+                }
+              })}
+              placeholder="your.email@example.com"
+              disabled={isLoading}
+            />
+            {errors.email && (
+              <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
             )}
           </div>
 
@@ -216,84 +262,83 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
             </div>
           </div>
 
-          {/* Payment Method */}
-          <div className="pt-4">
-            <Label>Payment Method *</Label>
-            <div className="mt-2 space-y-2">
-              <div 
-                className={`p-3 border rounded-lg cursor-pointer ${
-                  watchedPaymentMethod === 'flutterwave' ? 'bg-primary/10 border-primary' : 'bg-muted/50'
-                }`}
-                onClick={() => handlePaymentMethodChange('flutterwave')}
-              >
-                <div className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    id="flutterwave"
-                    value="flutterwave"
-                    {...register('payment_method')}
-                    checked={watchedPaymentMethod === 'flutterwave'}
-                    className="hidden"
-                  />
-                  <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${
-                    watchedPaymentMethod === 'flutterwave' ? 'border-primary bg-primary' : 'border-muted-foreground'
-                  }`}>
-                    {watchedPaymentMethod === 'flutterwave' && (
-                      <div className="h-2 w-2 rounded-full bg-white"></div>
-                    )}
-                  </div>
-                  <label htmlFor="flutterwave" className="font-medium cursor-pointer">
-                    Pay with Flutterwave
-                  </label>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1 ml-6">
-                  Secure payment via Flutterwave (Cards, Bank Transfer, USSD)
-                </p>
-              </div>
+          {/* Delivery Preference */}
+          <div>
+            <Label htmlFor="delivery_preference">Delivery Preference</Label>
+            <Select
+              value={watch('delivery_preference') || 'standard'}
+              onValueChange={(value) => setValue('delivery_preference', value)}
+              disabled={isLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select delivery option" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="standard">Standard Delivery (3-5 business days)</SelectItem>
+                <SelectItem value="express">Express Delivery (1-2 business days)</SelectItem>
+                <SelectItem value="same_day">Same Day Delivery (Lagos only)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-              {/* Add other payment methods if needed */}
-              {/* <div 
-                className={`p-3 border rounded-lg cursor-pointer mt-2 ${
-                  watchedPaymentMethod === 'paystack' ? 'bg-primary/10 border-primary' : 'bg-muted/50'
-                }`}
-                onClick={() => handlePaymentMethodChange('paystack')}
-              >
-                <div className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    id="paystack"
-                    value="paystack"
-                    {...register('payment_method')}
-                    checked={watchedPaymentMethod === 'paystack'}
-                    className="hidden"
-                  />
-                  <div className={`h-4 w-4 rounded-full border flex items-center justify-center ${
-                    watchedPaymentMethod === 'paystack' ? 'border-primary bg-primary' : 'border-muted-foreground'
-                  }`}>
-                    {watchedPaymentMethod === 'paystack' && (
-                      <div className="h-2 w-2 rounded-full bg-white"></div>
-                    )}
+          {/* Order Notes */}
+          <div>
+            <Label htmlFor="order_notes">Special Instructions (Optional)</Label>
+            <textarea
+              id="order_notes"
+              {...register('order_notes', {
+                maxLength: { value: 500, message: 'Notes cannot exceed 500 characters' }
+              })}
+              placeholder="Any special delivery instructions, preferred delivery time, etc."
+              disabled={isLoading}
+              className="w-full min-h-[80px] px-3 py-2 border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rounded-md resize-vertical"
+              rows={3}
+            />
+            {errors.order_notes && (
+              <p className="text-sm text-red-500 mt-1">{errors.order_notes.message}</p>
+            )}
+            <p className="text-xs text-muted-foreground mt-1">
+              {watch('order_notes')?.length || 0}/500 characters
+            </p>
+          </div>
+
+          {/* Payment Method - WhatsApp Only */}
+          <div className="pt-4">
+            <Label>Order Method *</Label>
+            <div className="mt-2">
+              <div className="p-4 border rounded-lg bg-green-50 border-green-200">
+                <div className="flex items-center gap-3">
+                  <div className="h-5 w-5 rounded-full bg-green-600 flex items-center justify-center">
+                    <div className="h-2 w-2 rounded-full bg-white"></div>
                   </div>
-                  <label htmlFor="paystack" className="font-medium cursor-pointer">
-                    Pay with Paystack
-                  </label>
+                  <div className="flex-1">
+                    <label className="font-medium text-green-800 cursor-pointer">
+                      Order via WhatsApp
+                    </label>
+                    <p className="text-sm text-green-700 mt-1">
+                      Complete your order through WhatsApp for personalized service and flexible payment options
+                    </p>
+                  </div>
+                  <div className="text-2xl">📱</div>
                 </div>
-              </div> */}
+              </div>
             </div>
           </div>
 
-          <Button 
-            type="submit" 
-            className="w-full mt-6" 
+          <Button
+            type="submit"
+            className="w-full mt-6 bg-green-600 hover:bg-green-700 text-white"
             disabled={isLoading || !watchedState}
           >
             {isLoading ? (
               <>
                 <Loader className="h-4 w-4 mr-2 animate-spin" />
-                Processing...
+                Preparing Order...
               </>
             ) : (
-              'Proceed to Payment'
+              <>
+                📱 Order via WhatsApp
+              </>
             )}
           </Button>
         </form>

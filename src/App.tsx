@@ -26,7 +26,6 @@ import OrderHistory from '@/pages/OrderHistory';
 import OrderDetail from '@/pages/OrderDetail';
 import Wishlist from '@/pages/Wishlist';
 import Notifications from '@/pages/Notifications';
-
 export default function App() {
   return (
     <div className="min-h-screen bg-background flex flex-col overflow-x-hidden w-full">

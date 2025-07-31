@@ -20,6 +20,7 @@ import { getImageUrl, getFirstImage } from '@/utils/imageUrl';
 import { getProductReviews, postProductReview } from '@/api/products';
 import { addToWishlist } from '@/api/wishlist';
 import { useAuth } from '@/contexts/AuthContext';
+import { products as mockProducts } from '@/data/mockData';
 
 const ProductDetail = () => {
   const { slug } = useParams();
@@ -29,12 +30,15 @@ const ProductDetail = () => {
   const [review, setReview] = useState('');
   const [showReviewForm, setShowReviewForm] = useState(false);
   
-  const { data: product, isLoading, error, refetch } = useProduct(slug!);
+  const { data: apiProduct, isLoading, error, refetch } = useProduct(slug!);
   const { data: featuredProducts } = useFeaturedProducts();
   const { isAuthenticated, token } = useAuth();
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [reviewsError, setReviewsError] = useState('');
+
+  // Fallback to mock product when API fails
+  const product = apiProduct || (error ? mockProducts.find(p => p.slug === slug) || mockProducts[0] : null);
 
   // Fetch reviews
   const fetchReviews = async () => {
@@ -42,9 +46,20 @@ const ProductDetail = () => {
     setReviewsError('');
     try {
       const data = await getProductReviews(slug!);
-      setReviews(data);
+      // Ensure data is an array
+      if (Array.isArray(data)) {
+        setReviews(data);
+      } else if (data && Array.isArray(data.results)) {
+        // Handle paginated response
+        setReviews(data.results);
+      } else {
+        console.warn('Reviews API returned unexpected format:', data);
+        setReviews([]);
+      }
     } catch (e: any) {
+      console.error('Failed to fetch reviews:', e);
       setReviewsError('Failed to load reviews');
+      setReviews([]); // Ensure reviews is always an array
     } finally {
       setReviewsLoading(false);
     }
@@ -64,7 +79,8 @@ const ProductDetail = () => {
     );
   }
 
-  if (error || !product) {
+  // Only show error if we have no product at all (including fallback)
+  if (!product) {
     return (
       <div className="min-h-screen w-full overflow-x-hidden">
         <div className="container mx-auto px-4 py-8">
@@ -237,7 +253,14 @@ const ProductDetail = () => {
           {/* Product Info */}
           <div className="w-full space-y-6">
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold mb-2 break-words">{product.name}</h1>
+              <h1 className="text-2xl lg:text-3xl font-bold mb-2 break-words">
+                {product.name}
+                {error && (
+                  <span className="text-xs ml-2 text-orange-600 font-normal">
+                    (Sample product - API unavailable)
+                  </span>
+                )}
+              </h1>
               
               {product.rating && (
                 <div className="flex items-center gap-2 mb-4">
@@ -397,7 +420,7 @@ const ProductDetail = () => {
               <p className="text-muted-foreground">No reviews yet. Be the first to review!</p>
             ) : (
               <div className="space-y-4">
-                {reviews.map((r: any) => (
+                {Array.isArray(reviews) && reviews.map((r: any) => (
                   <Card key={r.id}>
                     <CardContent className="py-4 px-6">
                       <div className="flex items-center gap-2 mb-1">

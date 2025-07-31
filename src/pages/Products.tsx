@@ -1,5 +1,4 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search, Filter, Grid, List, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,24 +10,29 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import SimpleProductCard from '@/components/SimpleProductCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
-import { useProducts } from '@/hooks/useProducts';
+import { useProductsInfinite } from '@/hooks/useProducts';
 import { FilterOptions } from '@/types';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useInView } from 'react-intersection-observer';
+import { useDebounce } from 'use-debounce';
+import { products as mockProducts } from '@/data/mockData';
 
 const Products = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const isMobile = useIsMobile();
+  const { ref, inView } = useInView({ threshold: 0.1 });
 
   const [filters, setFilters] = useState<FilterOptions>({
     searchTerm: '',
     category: '',
     minPrice: 0,
-    maxPrice: 500,
+    maxPrice: 10000, // Increased to accommodate higher prices
     inStock: false
   });
+
+  const [debouncedFilters] = useDebounce(filters, 300);
 
   // Sync category from URL query string
   const location = useLocation();
@@ -41,41 +45,62 @@ const Products = () => {
   const [sortBy, setSortBy] = useState<string>('name');
 
   const apiParams = useMemo(() => {
-    const params: Record<string, any> = {};
-    if (filters.searchTerm) params.search = filters.searchTerm;
-    // Only send category if it is a non-empty string and not 'all'
-    if (filters.category && typeof filters.category === 'string' && filters.category.trim() !== '' && filters.category !== 'all') {
-      params.category = filters.category;
+    const params: Record<string, unknown> = {};
+    if (debouncedFilters.searchTerm) params.search = debouncedFilters.searchTerm;
+    if (debouncedFilters.category && debouncedFilters.category !== 'all') {
+      params.category = debouncedFilters.category;
     }
-    if (filters.minPrice) params.min_price = filters.minPrice;
-    if (filters.maxPrice) params.max_price = filters.maxPrice;
-    if (filters.inStock) params.in_stock = true;
+    if (debouncedFilters.minPrice && debouncedFilters.minPrice > 0) params.min_price = debouncedFilters.minPrice;
+    // Only send max_price if it's been changed from default (10000) or if min_price is set
+    if (debouncedFilters.maxPrice && (debouncedFilters.maxPrice < 10000 || debouncedFilters.minPrice > 0)) {
+      params.max_price = debouncedFilters.maxPrice;
+    }
+    if (debouncedFilters.inStock) params.in_stock = true;
 
     switch (sortBy) {
-      case 'price-low':
-        params.ordering = 'price';
-        break;
-      case 'price-high':
-        params.ordering = '-price';
-        break;
-      case 'rating':
-        params.ordering = '-rating';
-        break;
-      default:
-        params.ordering = 'name';
-        break;
+      case 'price-low': params.ordering = 'price'; break;
+      case 'price-high': params.ordering = '-price'; break;
+      case 'rating': params.ordering = '-rating'; break;
+      default: params.ordering = 'name';
     }
     return params;
-  }, [filters, sortBy]);
+  }, [debouncedFilters, sortBy]);
 
-  const { data: productsData, isLoading, error, refetch } = useProducts(apiParams);
+  const {
+    data,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    refetch,
+  } = useProductsInfinite(apiParams);
 
-  // Ensure products is always an array
-  const products = Array.isArray(productsData)
-    ? productsData
-    : productsData?.results ?? [];
+  // Safely flatten all pages of products with null checks and add fallback
+  const products = useMemo(() => {
+    const apiProducts = data?.pages.flatMap(page => 
+      page?.results?.filter(product => product?.id) || []
+    ) || [];
+    
+    // Only use mock data if we have an error AND no API data at all
+    if (error && apiProducts.length === 0 && !data) {
+      return mockProducts;
+    }
+    
+    return apiProducts;
+  }, [data, error]);
 
-  const handleFilterChange = (key: keyof FilterOptions, value: any) => {
+  const totalProducts = data?.pages[0]?.count || (error && !data ? mockProducts.length : 0);
+
+  // Infinite scroll effect - only disable if we're using mock data
+  const isUsingMockData = error && !data && products.length === mockProducts.length;
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage && !isUsingMockData) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage, isUsingMockData]);
+
+  const handleFilterChange = (key: keyof FilterOptions, value: unknown) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
@@ -84,12 +109,12 @@ const Products = () => {
       searchTerm: '',
       category: '',
       minPrice: 0,
-      maxPrice: 500,
+      maxPrice: 10000,
       inStock: false
     });
   };
 
-  if (isLoading) {
+  if (isLoading && !data) {
     return (
       <div className="w-full overflow-x-hidden">
         <div className="container mx-auto px-4 py-8">
@@ -99,7 +124,8 @@ const Products = () => {
     );
   }
 
-  if (error) {
+  // Only show error if we have no products at all (including fallback)
+  if (error && products.length === 0) {
     return (
       <div className="w-full overflow-x-hidden">
         <div className="container mx-auto px-4 py-8">
@@ -160,15 +186,15 @@ const Products = () => {
                     <Slider
                       value={[filters.minPrice]}
                       onValueChange={([val]) => handleFilterChange('minPrice', val)}
-                      max={500}
-                      step={10}
+                      max={10000}
+                      step={100}
                       className="w-full"
                     />
                     <Slider
                       value={[filters.maxPrice]}
                       onValueChange={([val]) => handleFilterChange('maxPrice', val)}
-                      max={500}
-                      step={10}
+                      max={10000}
+                      step={100}
                       className="w-full"
                     />
                   </div>
@@ -203,10 +229,29 @@ const Products = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <div>
                 <h1 className="text-3xl font-bold">Products</h1>
-                <p className="text-muted-foreground">Showing {products.length} products</p>
+                <p className="text-muted-foreground">
+                  Showing {products.length} of {totalProducts} products
+                  {error && (
+                    <span className="text-xs ml-2 text-orange-600">
+                      (Sample data - API unavailable)
+                    </span>
+                  )}
+                </p>
               </div>
 
               <div className="flex items-center gap-4">
+                {isMobile && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowFilters(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Filter className="h-4 w-4" />
+                    Filters
+                  </Button>
+                )}
+                
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="w-48">
                     <SelectValue placeholder="Sort by" />
@@ -216,7 +261,6 @@ const Products = () => {
                     <SelectItem value="price-low">Price: Low to High</SelectItem>
                     <SelectItem value="price-high">Price: High to Low</SelectItem>
                     <SelectItem value="rating">Rating</SelectItem>
-                    <SelectItem value="category">Category</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -241,17 +285,38 @@ const Products = () => {
               </div>
             </div>
 
-            {products.length === 0 ? (
+            {products.length === 0 && !isLoading ? (
               <div className="text-center py-12">
                 <p className="text-lg text-muted-foreground">No products found.</p>
                 <Button onClick={clearFilters} className="mt-4">Clear Filters</Button>
               </div>
             ) : (
-              <div className={`grid gap-4 lg:gap-6 ${viewMode === 'grid' ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
-                {products.map((product) => (
-                  <SimpleProductCard key={product.id} product={product} />
-                ))}
-              </div>
+              <>
+                <div className={`grid gap-4 lg:gap-6 ${viewMode === 'grid' ? 'grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
+                  {products.map((product) => (
+                    product?.id ? (
+                      <SimpleProductCard key={product.id} product={product} />
+                    ) : null
+                  ))}
+                </div>
+                
+                {/* Infinite scroll trigger */}
+                <div ref={ref} className="w-full h-10 flex items-center justify-center py-4">
+                  {isFetchingNextPage && <LoadingSpinner size="sm" />}
+                  {!hasNextPage && products.length > 0 && !isUsingMockData && (
+                    <p className="text-muted-foreground text-sm">
+                      {products.length >= totalProducts 
+                        ? "You've reached the end" 
+                        : "No more products to load"}
+                    </p>
+                  )}
+                  {isUsingMockData && products.length > 0 && (
+                    <p className="text-muted-foreground text-sm">
+                      Showing sample products (API unavailable)
+                    </p>
+                  )}
+                </div>
+              </>
             )}
           </main>
         </div>
@@ -261,4 +326,3 @@ const Products = () => {
 };
 
 export default Products;
- 

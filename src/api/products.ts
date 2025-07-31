@@ -23,14 +23,39 @@ export const ProductService = {
   },
 
   getFeaturedProducts: async (): Promise<Product[]> => {
+    console.log('Fetching featured products...');
+    
     try {
       // Try the featured endpoint first
+      console.log('Trying /products/featured/ endpoint');
       const { data } = await apiClient.get('/products/featured/');
-      return data.results || data;
-    } catch (error) {
-      console.log('Featured endpoint failed, trying with featured=true param');
-      const { data } = await apiClient.get('/products/', { params: { featured: true } });
-      return data.results || [];
+      console.log('Featured endpoint response:', data);
+      return Array.isArray(data) ? data : (data.results || []);
+    } catch (error: any) {
+      console.log('Featured endpoint failed:', error.response?.status, error.message);
+      
+      try {
+        console.log('Trying /products/ with featured=true param');
+        const { data } = await apiClient.get('/products/', { params: { featured: true } });
+        console.log('Featured param response:', data);
+        return Array.isArray(data) ? data : (data.results || []);
+      } catch (secondError: any) {
+        console.log('Featured param failed:', secondError.response?.status, secondError.message);
+        
+        try {
+          console.log('Trying /products/ with is_featured=true param');
+          const { data } = await apiClient.get('/products/', { params: { is_featured: true } });
+          console.log('is_featured param response:', data);
+          return Array.isArray(data) ? data : (data.results || []);
+        } catch (thirdError: any) {
+          console.error('All featured product endpoints failed:', {
+            status: thirdError.response?.status,
+            message: thirdError.message,
+            data: thirdError.response?.data
+          });
+          throw thirdError; // Let React Query handle the error and show fallback
+        }
+      }
     }
   },
 

@@ -20,7 +20,7 @@ const Footer = () => {
               Your favorite destination for beautiful, trendy products. Shop with style and confidence.
             </p>
             <div className="flex gap-4">
-              <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+              <a href="https://www.instagram.com/softgirlbling.ng?utm_source=qr&igsh=MTJzOHF3eXJ3Ym83ag==" className="text-muted-foreground hover:text-primary transition-colors">
                 <Instagram className="h-5 w-5" />
               </a>
               <a href="#" className="text-muted-foreground hover:text-primary transition-colors">

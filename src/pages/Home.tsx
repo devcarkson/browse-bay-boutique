@@ -8,15 +8,28 @@ import { ArrowRight, Truck, Shield, HeadphonesIcon } from 'lucide-react';
 import { useFeaturedProducts, useNewArrivalProducts, useProducts } from '@/hooks/useProducts';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
+import { products as mockProducts } from '@/data/mockData';
 
 const Home = () => {
   const { data: featuredProducts, isLoading: isLoadingFeatured, error: errorFeatured, refetch: refetchFeatured } = useFeaturedProducts();
   const { data: newArrivals, isLoading: isLoadingNew, error: errorNew, refetch: refetchNew } = useNewArrivalProducts();
   const { data: allProducts = [] } = useProducts({});
 
+  // Fallback to mock data when API fails
+  const mockFeaturedProducts = mockProducts.filter(p => p.is_featured);
+  const mockNewArrivals = mockProducts.filter(p => p.is_new_arrival);
+  
+  const finalFeaturedProducts = featuredProducts && featuredProducts.length > 0 
+    ? featuredProducts 
+    : (errorFeatured ? mockFeaturedProducts : []);
+
+  const finalNewArrivals = newArrivals && newArrivals.length > 0 
+    ? newArrivals 
+    : (errorNew ? mockNewArrivals : []);
+
   const displayProducts = Array.isArray(allProducts)
     ? allProducts.slice(0, 6)
-    : allProducts?.results?.slice(0, 6) || [];
+    : allProducts?.results?.slice(0, 6) || mockProducts.slice(0, 6);
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden">
@@ -50,10 +63,36 @@ const Home = () => {
         <div className="container mx-auto px-4">
           {isLoadingFeatured ? (
             <LoadingSpinner />
-          ) : errorFeatured ? (
-            <ErrorMessage message="Failed to load featured products" onRetry={refetchFeatured} />
+          ) : finalFeaturedProducts.length > 0 ? (
+            <>
+              <FeaturedSlider 
+                products={finalFeaturedProducts} 
+                title="Featured Products" 
+                isLoading={false}
+                error={null}
+              />
+              {errorFeatured && (
+                <div className="text-center mt-2">
+                  <p className="text-xs text-muted-foreground">
+                    Showing sample products (API unavailable)
+                  </p>
+                  {import.meta.env.DEV && (
+                    <details className="mt-2">
+                      <summary className="text-xs cursor-pointer text-muted-foreground hover:text-foreground">
+                        Debug Info
+                      </summary>
+                      <div className="text-xs text-left bg-muted p-2 rounded mt-1">
+                        <p><strong>Error:</strong> {errorFeatured.message}</p>
+                        <p><strong>Status:</strong> {(errorFeatured as any).response?.status}</p>
+                        <p><strong>API URL:</strong> {import.meta.env.VITE_API_BASE_URL}</p>
+                      </div>
+                    </details>
+                  )}
+                </div>
+              )}
+            </>
           ) : (
-            <FeaturedSlider products={featuredProducts || []} title="Featured Products" />
+            <ErrorMessage message="Failed to load featured products" onRetry={refetchFeatured} />
           )}
         </div>
       </section>
@@ -63,10 +102,24 @@ const Home = () => {
         <div className="container mx-auto px-4">
           {isLoadingNew ? (
             <LoadingSpinner />
-          ) : errorNew ? (
-            <ErrorMessage message="Failed to load new arrivals" onRetry={refetchNew} />
+          ) : finalNewArrivals.length > 0 ? (
+            <>
+              <FeaturedSlider 
+                products={finalNewArrivals} 
+                title="New Arrivals" 
+                isLoading={false}
+                error={null}
+              />
+              {errorNew && (
+                <div className="text-center mt-2">
+                  <p className="text-xs text-muted-foreground">
+                    Showing sample products (API unavailable)
+                  </p>
+                </div>
+              )}
+            </>
           ) : (
-            <FeaturedSlider products={newArrivals || []} title="New Arrivals" />
+            <ErrorMessage message="Failed to load new arrivals" onRetry={refetchNew} />
           )}
         </div>
       </section>

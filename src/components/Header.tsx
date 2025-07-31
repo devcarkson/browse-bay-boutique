@@ -9,15 +9,14 @@ import {
   LogOut,
   LayoutDashboard,
 } from "lucide-react";
-import { useEffect } from "react";
-import { getCategories } from "@/api/categories";
-import { Category } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCart } from "@/contexts/CartContext";
 import { Link, useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCategories } from "@/hooks/useCategories";
+import { categories as mockCategories } from "@/data/mockData";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -32,11 +31,9 @@ const Header = () => {
   const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Categories from backend
-  const [categories, setCategories] = useState<Category[]>([]);
-  useEffect(() => {
-    getCategories().then(setCategories).catch(() => setCategories([]));
-  }, []);
+  // Categories from backend with fallback to mock data
+  const { data: categoriesData, isLoading: categoriesLoading, error: categoriesError } = useCategories();
+  const categories = categoriesData && Array.isArray(categoriesData) ? categoriesData : mockCategories;
 
   const handleLogout = () => {
     logout();

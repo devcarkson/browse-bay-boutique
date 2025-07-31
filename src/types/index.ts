@@ -43,10 +43,32 @@ export interface Address {
   country: string;
 }
 
+// src/types/index.ts
+// export interface Product {
+//   id: number;
+//   name: string;
+//   description: string;
+//   price: number;
+//   category: string;
+//   rating?: number;
+//   image: string;
+//   slug: string;
+//   is_featured?: boolean;
+//   is_new_arrival?: boolean;
+//   // Add any other product fields you need
+// }
+
 export interface FilterOptions {
   searchTerm: string;
-  category: string | number; // Accept both string and number
+  category: string;
   minPrice: number;
   maxPrice: number;
   inStock: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
 }
