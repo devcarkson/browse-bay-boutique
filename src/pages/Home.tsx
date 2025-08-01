@@ -159,7 +159,7 @@ const Home = () => {
               </div>
               <h3 className="text-xl font-semibold mb-2">Fast Delivery</h3>
               <p className="text-muted-foreground">
-                Free shipping on orders over ₦50,000. Fast and reliable delivery nationwide.
+                Free shipping on orders over ₦30,000. Fast and reliable delivery nationwide.
               </p>
             </div>
             <div className="text-center">
