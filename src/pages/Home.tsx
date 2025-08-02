@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import FeaturedSlider from '@/components/FeaturedSlider';
+import SkeletonFeaturedSlider from '@/components/SkeletonFeaturedSlider';
 import SimpleProductCard from '@/components/SimpleProductCard';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Truck, Shield, HeadphonesIcon } from 'lucide-react';
@@ -62,7 +63,7 @@ const Home = () => {
       <section className="py-2 w-full">
         <div className="container mx-auto px-4">
           {isLoadingFeatured ? (
-            <LoadingSpinner />
+            <SkeletonFeaturedSlider title="Featured Products" itemCount={4} />
           ) : finalFeaturedProducts.length > 0 ? (
             <>
               <FeaturedSlider 
@@ -101,7 +102,7 @@ const Home = () => {
       <section className="py-2 bg-muted/30 w-full">
         <div className="container mx-auto px-4">
           {isLoadingNew ? (
-            <LoadingSpinner />
+            <SkeletonFeaturedSlider title="New Arrivals" itemCount={3} />
           ) : finalNewArrivals.length > 0 ? (
             <>
               <FeaturedSlider 

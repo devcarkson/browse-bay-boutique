@@ -6,7 +6,7 @@ import { Product } from '@/types/product.types';
 import { useCart } from '@/contexts/CartContext';
 import { Link } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
-import { getImageUrl, getFirstImage } from '@/utils/imageUrl';
+import { getImageUrl, getFirstImage, getProductImage } from '@/utils/imageUrl';
 
 interface ProductCardProps {
   product: Product;
@@ -16,7 +16,7 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product, isSliderCard = false }) => {
   const { addToCart } = useCart();
 
-  const primaryImageUrl = getFirstImage(product.images);
+  const primaryImageUrl = getProductImage(product, 'medium');
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();

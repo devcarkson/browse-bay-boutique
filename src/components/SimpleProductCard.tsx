@@ -3,7 +3,7 @@ import { Star } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Product } from '@/types/product.types';
 import { Link } from 'react-router-dom';
-import { getImageUrl } from '@/utils/imageUrl';
+import { getImageUrl, getProductImage } from '@/utils/imageUrl';
 
 interface SimpleProductCardProps {
   product: Product;
@@ -22,11 +22,7 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({ product }) => {
     ));
 
   /* ----- Image handling ----- */
-  // Your API returns: images: ["/media/products/file.jpg", ...]
-  const primaryImage =
-  Array.isArray(product.images) && product.images.length > 0
-    ? String(product.images[0])
-    : '';
+  const primaryImageUrl = getProductImage(product, 'medium');
 
   return (
     <Link to={`/product/${product.slug}`}>
@@ -35,7 +31,7 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({ product }) => {
           {/* Product image */}
           <div className="aspect-square overflow-hidden rounded-lg mb-3 bg-gray-100">
             <img
-              src={getImageUrl(primaryImage)}
+              src={primaryImageUrl}
               alt={product.name}
               onError={(e) => (e.currentTarget.src = '/placeholder.svg')}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

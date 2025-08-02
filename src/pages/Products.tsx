@@ -22,7 +22,10 @@ const Products = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const isMobile = useIsMobile();
-  const { ref, inView } = useInView({ threshold: 0.1 });
+  const { ref, inView } = useInView({ 
+    threshold: 0.1,
+    rootMargin: '100px' // Trigger 100px before the element comes into view
+  });
 
   const [filters, setFilters] = useState<FilterOptions>({
     searchTerm: '',
@@ -75,6 +78,8 @@ const Products = () => {
     isLoading,
     refetch,
   } = useProductsInfinite(apiParams);
+
+
 
   // Safely flatten all pages of products with null checks and add fallback
   const products = useMemo(() => {
@@ -301,15 +306,37 @@ const Products = () => {
                 </div>
                 
                 {/* Infinite scroll trigger */}
-                <div ref={ref} className="w-full h-10 flex items-center justify-center py-4">
-                  {isFetchingNextPage && <LoadingSpinner size="sm" />}
+                <div ref={ref} className="w-full h-20 flex flex-col items-center justify-center py-4 gap-3">
+                  {isFetchingNextPage && (
+                    <div className="flex items-center gap-2">
+                      <LoadingSpinner size="sm" />
+                      <span className="text-sm text-muted-foreground">Loading more products...</span>
+                    </div>
+                  )}
+                  
+                  {hasNextPage && !isFetchingNextPage && !isUsingMockData && (
+                    <div className="flex flex-col items-center gap-2">
+                      <Button 
+                        onClick={() => fetchNextPage()} 
+                        variant="outline"
+                        className="px-6"
+                      >
+                        Load More Products
+                      </Button>
+                      <p className="text-muted-foreground text-xs">
+                        Or scroll down for automatic loading
+                      </p>
+                    </div>
+                  )}
+                  
                   {!hasNextPage && products.length > 0 && !isUsingMockData && (
                     <p className="text-muted-foreground text-sm">
                       {products.length >= totalProducts 
-                        ? "You've reached the end" 
+                        ? `You've reached the end (${products.length} of ${totalProducts} products)` 
                         : "No more products to load"}
                     </p>
                   )}
+                  
                   {isUsingMockData && products.length > 0 && (
                     <p className="text-muted-foreground text-sm">
                       Showing sample products (API unavailable)

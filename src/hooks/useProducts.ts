@@ -18,9 +18,27 @@ export const useProductsInfinite = (params?: Record<string, unknown>) => {
     },
     getNextPageParam: (lastPage) => {
       if (!lastPage.next) return undefined;
-      const url = new URL(lastPage.next);
-      const nextPage = url.searchParams.get('page');
-      return nextPage ? Number(nextPage) : undefined;
+      
+      try {
+        // Handle both absolute and relative URLs
+        let urlToParse = lastPage.next;
+        if (!urlToParse.startsWith('http')) {
+          // If it's a relative URL, make it absolute
+          urlToParse = `${window.location.origin}${urlToParse}`;
+        }
+        
+        const url = new URL(urlToParse);
+        const nextPage = url.searchParams.get('page');
+        return nextPage ? Number(nextPage) : undefined;
+      } catch (error) {
+        // Fallback: try to extract page number with regex
+        const match = lastPage.next.match(/[?&]page=(\d+)/);
+        if (match) {
+          return Number(match[1]);
+        }
+        
+        return undefined;
+      }
     },
     initialPageParam: 1,
     retry: (failureCount, error) => {
@@ -58,9 +76,11 @@ export const useFeaturedProducts = () => {
       if (error.response?.status === 500) return false;
       return failureCount < 2;
     },
-    retryDelay: 1000,
+    retryDelay: 500, // Faster retry
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
+    refetchOnWindowFocus: false, // Don't refetch when window gains focus
+    refetchOnMount: false, // Don't refetch on component mount if data exists
   });
 };
 
@@ -74,9 +94,11 @@ export const useNewArrivalProducts = () => {
       if (error.response?.status === 500) return false;
       return failureCount < 2;
     },
-    retryDelay: 1000,
+    retryDelay: 500, // Faster retry
     staleTime: 5 * 60 * 1000, // 5 minutes cache
     gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
+    refetchOnWindowFocus: false, // Don't refetch when window gains focus
+    refetchOnMount: false, // Don't refetch on component mount if data exists
   });
 };
 

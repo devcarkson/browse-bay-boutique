@@ -16,7 +16,7 @@ import { useFeaturedProducts } from '@/hooks/useProducts';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from '@/hooks/use-toast';
 import ProductImageSlider from '@/components/ProductImageSlider';
-import { getImageUrl, getFirstImage } from '@/utils/imageUrl';
+import { getImageUrl, getFirstImage, getProductImage } from '@/utils/imageUrl';
 import { getProductReviews, postProductReview } from '@/api/products';
 import { addToWishlist } from '@/api/wishlist';
 import { useAuth } from '@/contexts/AuthContext';
@@ -100,13 +100,25 @@ const ProductDetail = () => {
   }
 
   // Get product images with proper URLs
-  // const productImages = Array.isArray(product.images) && product.images.length > 0
-  // ? product.images.map(img => getImageUrl(typeof img === 'string' ? img : img.image))
-  // : ['/placeholder.svg'];
-
-    const productImages = Array.isArray(product.images) && product.images.length > 0
-    ? product.images.map(img => getImageUrl(img))
-    : ['/placeholder.svg'];
+  const productImages = (() => {
+    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+      // New format: array of ProductImage objects
+      return product.images.map(img => {
+        if (typeof img === 'string') {
+          return getImageUrl(img); // Legacy format
+        }
+        // New format: use thumbnail_large for detail view, fallback to image
+        return getImageUrl(img.thumbnail_large || img.image);
+      });
+    }
+    
+    // Fallback: try to get from primary_image
+    if (product.primary_image) {
+      return [getImageUrl(product.primary_image.thumbnail_medium)];
+    }
+    
+    return ['/placeholder.svg'];
+  })();
 
 
 
