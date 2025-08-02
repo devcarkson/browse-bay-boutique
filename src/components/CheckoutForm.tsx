@@ -129,7 +129,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
                   message: 'Please enter a valid Nigerian phone number'
                 }
               })}
-              placeholder="+234 xxx xxx xxxx or 0xxx xxx xxxx"
+              placeholder="0xxx xxx xxxx"
               disabled={isLoading}
             />
             {errors.phone && (
@@ -152,7 +152,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
                   message: 'Please enter a valid email address'
                 }
               })}
-              placeholder="your.email@example.com"
+              placeholder="Email"
               disabled={isLoading}
             />
             {errors.email && (
@@ -195,7 +195,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
               )}
             </div>
             <div>
-              <Label htmlFor="shipping_zip_code">ZIP/Postal Code (Optional)</Label>
+              <Label htmlFor="shipping_zip_code">ZIPCode (Optional)</Label>
               <Input
                 id="shipping_zip_code"
                 {...register('shipping_zip_code', { 
