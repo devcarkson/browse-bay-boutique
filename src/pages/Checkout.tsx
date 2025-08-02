@@ -53,8 +53,7 @@ const Checkout = () => {
         shipping_address: 'Shipping Address',
         shipping_city: 'City',
         shipping_state: 'State/Province',
-        shipping_country: 'Country',
-        shipping_zip_code: 'ZIP/Postal Code'
+        shipping_country: 'Country'
       };
 
       for (const [field, name] of Object.entries(requiredFields)) {

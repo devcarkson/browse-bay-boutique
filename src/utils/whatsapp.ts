@@ -9,7 +9,7 @@ export interface WhatsAppOrderData {
   shipping_city: string;
   shipping_state: string;
   shipping_country: string;
-  shipping_zip_code: string;
+  shipping_zip_code?: string;
   order_notes?: string;
   delivery_preference?: string;
 }
@@ -48,12 +48,17 @@ export const formatWhatsAppMessage = (data: WhatsAppMessageData): string => {
     messageLines.push(`Email: ${customerInfo.email}`);
   }
 
+  // Build address line with optional ZIP code
+  const addressLine = customerInfo.shipping_zip_code 
+    ? `${customerInfo.shipping_country}, ${customerInfo.shipping_zip_code}`
+    : customerInfo.shipping_country;
+
   messageLines.push(
     ``,
     ` *Delivery Address:*`,
     `${customerInfo.shipping_address}`,
     `${customerInfo.shipping_city}, ${customerInfo.shipping_state}`,
-    `${customerInfo.shipping_country}, ${customerInfo.shipping_zip_code}`,
+    addressLine,
     ``
   );
 

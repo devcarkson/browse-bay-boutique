@@ -16,7 +16,7 @@ interface CheckoutFormData {
   shipping_city: string;
   shipping_state: string;
   shipping_country: string;
-  shipping_zip_code: string;
+  shipping_zip_code?: string;
   order_notes?: string;
   delivery_preference?: string;
   payment_method: string;
@@ -120,7 +120,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
 
           {/* Phone Number */}
           <div>
-            <Label htmlFor="phone">Phone Number (Optional)</Label>
+            <Label htmlFor="phone">Phone Number</Label>
             <Input
               id="phone"
               {...register('phone', {
@@ -195,11 +195,10 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
               )}
             </div>
             <div>
-              <Label htmlFor="shipping_zip_code">ZIP/Postal Code *</Label>
+              <Label htmlFor="shipping_zip_code">ZIP/Postal Code (Optional)</Label>
               <Input
                 id="shipping_zip_code"
                 {...register('shipping_zip_code', { 
-                  required: 'ZIP/Postal code is required',
                   pattern: {
                     value: /^[0-9]{6}$/,
                     message: 'Please enter a valid 6-digit postal code'

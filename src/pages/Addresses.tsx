@@ -27,7 +27,7 @@ interface Address {
   street: string;
   city: string;
   state: string;
-  zipCode: string;
+  zipCode?: string;
   phone: string;
 }
 
@@ -241,13 +241,12 @@ const Addresses = () => {
               </div>
 
               <div>
-                <Label htmlFor="zipCode">ZIP Code</Label>
+                <Label htmlFor="zipCode">ZIP Code (Optional)</Label>
                 <Input
                   id="zipCode"
                   name="zipCode"
                   value={formData.zipCode}
                   onChange={handleInputChange}
-                  required
                 />
               </div>
 
@@ -296,7 +295,7 @@ const Addresses = () => {
                       </p>
                       <p className="text-sm text-muted-foreground">{address.street}</p>
                       <p className="text-sm text-muted-foreground">
-                        {address.city}, {address.state} {address.zipCode}
+                        {address.city}, {address.state}{address.zipCode ? ` ${address.zipCode}` : ''}
                       </p>
                       <p className="text-sm text-muted-foreground">{address.phone}</p>
                     </div>

@@ -15,7 +15,7 @@ export interface CheckoutData {
   shipping_city: string;
   shipping_state: string;
   shipping_country: string;
-  shipping_zip_code: string;
+  shipping_zip_code?: string;
   payment_method: string;
   cart_items?: CartItem[];
 }
@@ -57,8 +57,7 @@ export const createCheckout = async (
       { field: "shipping_address", name: "Shipping address" },
       { field: "shipping_city", name: "City" },
       { field: "shipping_state", name: "State/Province" },
-      { field: "shipping_country", name: "Country" },
-      { field: "shipping_zip_code", name: "ZIP/Postal code" }
+      { field: "shipping_country", name: "Country" }
     ];
     
     for (const { field, name } of requiredFields) {
